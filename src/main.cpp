@@ -50,7 +50,19 @@ int main(int argc, char ** argv) {
             const char* appimage_env = getenv("APPIMAGE");
             const char* target_exe = appimage_env ? appimage_env : exe_path;
             if (system("which pkexec > /dev/null 2>&1") == 0) {
-                execlp("pkexec", "pkexec", target_exe, NULL);
+                const char* disp = getenv("DISPLAY");
+                const char* wayl = getenv("WAYLAND_DISPLAY");
+                const char* xauth = getenv("XAUTHORITY");
+                
+                std::string env_disp = disp ? std::string("DISPLAY=") + disp : "DISPLAY=:0";
+                std::string env_wayl = wayl ? std::string("WAYLAND_DISPLAY=") + wayl : "WAYLAND_DISPLAY=wayland-0";
+                std::string env_xauth = xauth ? std::string("XAUTHORITY=") + xauth : "";
+
+                if (xauth) {
+                    execlp("pkexec", "pkexec", "env", env_disp.c_str(), env_wayl.c_str(), env_xauth.c_str(), target_exe, NULL);
+                } else {
+                    execlp("pkexec", "pkexec", "env", env_disp.c_str(), env_wayl.c_str(), target_exe, NULL);
+                }
                 // If execlp returns, pkexec failed or was cancelled by user, so we continue with X11 fallback
             }
         }
