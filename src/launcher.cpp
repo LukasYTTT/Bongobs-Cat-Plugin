@@ -24,31 +24,15 @@ bool auto_install_dialogs() {
 }
 
 std::string open_file_dialog() {
-    char filename[1024];
-    std::string home_dir = "";
-    const char* home_env = getenv("HOME");
-    if (home_env) {
-        home_dir = std::string(home_env) + "/";
-    }
-
+    char filename[2048];
     bool has_zenity = system("which zenity > /dev/null 2>&1") == 0;
     bool has_kdialog = system("which kdialog > /dev/null 2>&1") == 0;
-
-    std::string clean_env = "env -i DISPLAY=\"$DISPLAY\" WAYLAND_DISPLAY=\"$WAYLAND_DISPLAY\" XDG_RUNTIME_DIR=\"$XDG_RUNTIME_DIR\" XAUTHORITY=\"$XAUTHORITY\" HOME=\"$HOME\" USER=\"$USER\" PATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\" ";
-    
-    std::string cmd_zenity = clean_env + "zenity --file-selection --title=\"Hintergrundbild auswählen\" --filename=\"" + home_dir + "\" 2>/dev/null";
-    std::string cmd_kdialog = clean_env + "kdialog --getopenfilename \"" + home_dir + "\" \"image/png image/jpeg\" 2>/dev/null";
     
     std::string cmd = "";
-    const char* desktop = getenv("XDG_CURRENT_DESKTOP");
-    bool is_kde = desktop && (std::string(desktop).find("KDE") != std::string::npos);
-
-    if (is_kde && has_kdialog) {
-        cmd = cmd_kdialog;
+    if (has_kdialog) {
+        cmd = "kdialog --inputbox \"Bitte füge den Pfad oder Link zum Bild ein:\" --title \"Hintergrundbild ändern\" 2>/dev/null";
     } else if (has_zenity) {
-        cmd = cmd_zenity;
-    } else if (has_kdialog) {
-        cmd = cmd_kdialog;
+        cmd = "zenity --entry --text=\"Bitte füge den Pfad oder Link zum Bild ein:\" --title=\"Hintergrundbild ändern\" 2>/dev/null";
     } else {
         return "";
     }
@@ -58,10 +42,24 @@ std::string open_file_dialog() {
         std::string result = filename;
         if (!result.empty() && result.back() == '\n') result.pop_back();
         pclose(f);
+        
+        // Handle HTTP link
+        if (result.rfind("http", 0) == 0) {
+            std::string home_dir = "";
+            const char* home_env = getenv("HOME");
+            if (home_env) {
+                home_dir = std::string(home_env);
+            }
+            std::string save_path = home_dir + "/.config/bongocat-osu/custom_bg_dl.png";
+            std::string dl_cmd = "wget -qO \"" + save_path + "\" \"" + result + "\"";
+            if (system(dl_cmd.c_str()) == 0) {
+                return save_path;
+            }
+            return "";
+        }
         return result;
     }
     if (f) pclose(f);
-
     return "";
 }
 
@@ -243,6 +241,35 @@ void draw() {
         frame.setOutlineColor(sf::Color(100, 150, 255, 120));
         window.draw(frame);
 
+        // Dragging Logic
+        static bool is_dragging_bg = false;
+        static sf::Vector2i last_drag_pos;
+
+        sf::FloatRect previewBounds(220, 90, 306, 177);
+        bool in_preview = previewBounds.contains(mouse_pos.x, mouse_pos.y);
+
+        if (current_mouse && !last_mouse && in_preview && data::has_custom_bg) {
+            is_dragging_bg = true;
+            last_drag_pos = mouse_pos;
+        }
+
+        if (!current_mouse && is_dragging_bg) {
+            is_dragging_bg = false;
+            data::save_config(); // Save offset
+        }
+
+        if (is_dragging_bg && current_mouse) {
+            int dx = mouse_pos.x - last_drag_pos.x;
+            int dy = mouse_pos.y - last_drag_pos.y;
+            if (dx != 0 || dy != 0) {
+                int ox = data::cfg["decoration"]["customBackgroundOffsetX"].asInt();
+                int oy = data::cfg["decoration"]["customBackgroundOffsetY"].asInt();
+                data::cfg["decoration"]["customBackgroundOffsetX"] = ox + dx * 2;
+                data::cfg["decoration"]["customBackgroundOffsetY"] = oy + dy * 2;
+                last_drag_pos = mouse_pos;
+            }
+        }
+
         // Set viewport for preview
         sf::View previewView(sf::FloatRect(0, 0, 612, 354));
         previewView.setViewport(sf::FloatRect(220.0f / 612.0f, 90.0f / 354.0f, 306.0f / 612.0f, 177.0f / 354.0f));
@@ -252,6 +279,9 @@ void draw() {
 
         if (data::has_custom_bg) {
             sf::Sprite custom_bg_sprite(data::custom_bg_tex);
+            int ox = data::cfg["decoration"]["customBackgroundOffsetX"].asInt();
+            int oy = data::cfg["decoration"]["customBackgroundOffsetY"].asInt();
+            custom_bg_sprite.setPosition(ox, oy);
             window.draw(custom_bg_sprite);
         }
 
@@ -265,15 +295,19 @@ void draw() {
         }
 
         window.setView(defaultView);
+        
+        if (data::has_custom_bg) {
+            draw_text("Tipp: Du kannst das Bild im Fenster mit der Maus ziehen!", 220, 275, 12, sf::Color(150, 200, 255));
+        }
     }
 
     // Smoke Checkbox
     sf::RectangleShape smokeBox(sf::Vector2f(20, 20));
-    smokeBox.setPosition(220, 255);
+    smokeBox.setPosition(220, 295);
     smokeBox.setOutlineThickness(1);
     smokeBox.setOutlineColor(sf::Color(100, 100, 120));
     
-    sf::FloatRect smokeBounds(220, 255, 250, 20);
+    sf::FloatRect smokeBounds(220, 295, 250, 20);
     bool sb_hovered = smokeBounds.contains(mouse_pos.x, mouse_pos.y);
     if (sb_hovered && clicked) {
         smoke_enabled = !smoke_enabled;
@@ -291,16 +325,16 @@ void draw() {
     
     smokeBox.setFillColor(smoke_enabled ? sf::Color(46, 204, 113) : sf::Color(40, 40, 50));
     window.draw(smokeBox);
-    draw_text("Smoke Overlay dauerhaft (statt Taste halten)", 250, 257, 12, sf::Color::White);
+    draw_text("Smoke Overlay dauerhaft (statt Taste halten)", 250, 297, 12, sf::Color::White);
 
     // Any Key Checkbox
     sf::RectangleShape checkbox(sf::Vector2f(20, 20));
-    checkbox.setPosition(220, 280);
+    checkbox.setPosition(220, 320);
     checkbox.setOutlineThickness(1);
     checkbox.setOutlineColor(sf::Color(100, 100, 120));
     
     // Make text also clickable for checkbox
-    sf::FloatRect checkBounds(220, 280, 250, 20);
+    sf::FloatRect checkBounds(220, 320, 250, 20);
     bool cb_hovered = checkBounds.contains(mouse_pos.x, mouse_pos.y);
     if (cb_hovered && clicked) {
         any_key_enabled = !any_key_enabled;
@@ -308,11 +342,11 @@ void draw() {
     
     checkbox.setFillColor(any_key_enabled ? sf::Color(46, 204, 113) : sf::Color(40, 40, 50));
     window.draw(checkbox);
-    draw_text("\"Any Key\" Feature (Tippen mit der Katze)", 250, 280, 14, sf::Color::White);
+    draw_text("\"Any Key\" Feature (Tippen mit der Katze)", 250, 320, 14, sf::Color::White);
 
     // Start Button
     sf::RectangleShape startBtn(sf::Vector2f(306, 35));
-    startBtn.setPosition(220, 315);
+    startBtn.setPosition(220, 355);
     startBtn.setOutlineThickness(1);
     startBtn.setOutlineColor(sf::Color(46, 204, 113));
     

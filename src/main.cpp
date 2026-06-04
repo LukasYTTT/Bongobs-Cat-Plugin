@@ -227,6 +227,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         
         if (data::has_custom_bg && !launcher::is_launcher) {
             sf::Sprite custom_bg_sprite(data::custom_bg_tex);
+            int ox = data::cfg["decoration"]["customBackgroundOffsetX"].asInt();
+            int oy = data::cfg["decoration"]["customBackgroundOffsetY"].asInt();
+            custom_bg_sprite.setPosition(ox, oy);
             window.draw(custom_bg_sprite);
         }
         
