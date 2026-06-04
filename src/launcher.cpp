@@ -149,6 +149,15 @@ void draw() {
         draw_text(modes[i], 35, 98 + i * 45, 14, sf::Color::White);
     }
 
+    // Draw shortcuts in the empty space on the sidebar
+    draw_text("Tastaturkuerzel:", 15, 305, 14, sf::Color(255, 200, 100));
+    draw_text("Strg+Drag: Hintegrund verschieben", 15, 330, 9, sf::Color(180, 180, 180));
+    draw_text("Strg+Scroll: Hintergrund skalier.", 15, 345, 9, sf::Color(180, 180, 180));
+    draw_text("Shift+Drag: Katze verschieben", 15, 360, 9, sf::Color(180, 180, 180));
+    draw_text("Shift+Scroll: Katze skalieren", 15, 375, 9, sf::Color(180, 180, 180));
+    draw_text("Alt+Drag/Scroll: Mund", 15, 390, 9, sf::Color(180, 180, 180));
+    draw_text("F1-F12: Gesichts-Effekte", 15, 405, 9, sf::Color(180, 180, 180));
+
     // Green Screen Checkbox
     sf::RectangleShape gsCheckbox(sf::Vector2f(16, 16));
     gsCheckbox.setPosition(220, 62);
