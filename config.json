@@ -150,6 +150,7 @@
     },
     "taiko" : 
     {
+        "anyKey" : true,
         "leftCentre" : 
         [
             88
