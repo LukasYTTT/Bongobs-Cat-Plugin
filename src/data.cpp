@@ -247,4 +247,3 @@ sf::Texture &load_texture(std::string path) {
     return img_holder[path];
 }
 }; // namespace data
-}; // namespace data
