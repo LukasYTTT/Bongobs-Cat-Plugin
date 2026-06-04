@@ -30,7 +30,7 @@ bool init() {
     dash_key_value = ctb["dash"];
 
     // importing sprites
-    bg.setTexture(data::load_texture("img/catch/bg.png"));
+    bg.setTexture(data::load_background("img/catch/bg.png"));
     mid.setTexture(data::load_texture("img/catch/mid.png"));
     left.setTexture(data::load_texture("img/catch/left.png"));
     right.setTexture(data::load_texture("img/catch/right.png"));

@@ -33,6 +33,7 @@ bool init();
 void save_config();
 
 sf::Texture &load_texture(std::string path);
+sf::Texture &load_background(std::string default_path);
 }; // namespace data
 
 namespace input {

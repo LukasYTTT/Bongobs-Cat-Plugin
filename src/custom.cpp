@@ -140,7 +140,7 @@ bool init() {
             data::error_msg("Custom background not found", "Error reading config");
             return false;
         }
-        bg.setTexture(data::load_texture(custom["background"].asString()));
+        bg.setTexture(data::load_background(custom["background"].asString()));
 
         is_mouse = custom["mouse"].asBool();
         if (is_mouse) {

@@ -1,5 +1,21 @@
 #include "header.hpp"
 
+#include <stdio.h>
+
+std::string open_file_dialog() {
+    char filename[1024];
+    FILE *f = popen("zenity --file-selection --title=\"Hintergrundbild auswählen\" --file-filter=\"Bilder | *.png *.jpg *.jpeg\" 2>/dev/null", "r");
+    if (!f) return "";
+    if (fgets(filename, sizeof(filename), f) != NULL) {
+        std::string result = filename;
+        if (!result.empty() && result.back() == '\n') result.pop_back();
+        pclose(f);
+        return result;
+    }
+    pclose(f);
+    return "";
+}
+
 namespace launcher {
 sf::Font font;
 int selected_mode = 1;
@@ -86,7 +102,7 @@ void draw() {
     gsCheckbox.setOutlineThickness(1);
     gsCheckbox.setOutlineColor(sf::Color(100, 100, 120));
     
-    sf::FloatRect gsCheckBounds(220, 62, 200, 16);
+    sf::FloatRect gsCheckBounds(220, 62, 170, 16);
     bool gs_hovered = gsCheckBounds.contains(mouse_pos.x, mouse_pos.y);
     if (gs_hovered && clicked) {
         bool is_green = (data::cfg["decoration"]["rgb"][0].asInt() == 0 && data::cfg["decoration"]["rgb"][1].asInt() == 255);
@@ -105,7 +121,59 @@ void draw() {
     bool is_green_now = (data::cfg["decoration"]["rgb"][0].asInt() == 0 && data::cfg["decoration"]["rgb"][1].asInt() == 255);
     gsCheckbox.setFillColor(is_green_now ? sf::Color(46, 204, 113) : sf::Color(40, 40, 50));
     window.draw(gsCheckbox);
-    draw_text("Green Screen Hintergrund", 245, 62, 14, sf::Color::White);
+    draw_text("Green Screen", 245, 62, 14, sf::Color::White);
+
+    // Custom Background File Picker
+    bool has_custom_bg = data::cfg["decoration"].isMember("customBackground") && data::cfg["decoration"]["customBackground"].asString() != "";
+
+    sf::RectangleShape bgBtn(sf::Vector2f(120, 20));
+    bgBtn.setPosition(366, 60);
+    bgBtn.setOutlineThickness(1);
+    bgBtn.setOutlineColor(sf::Color(100, 150, 255));
+    bool bgBtn_hovered = bgBtn.getGlobalBounds().contains(mouse_pos.x, mouse_pos.y);
+    bgBtn.setFillColor(bgBtn_hovered ? sf::Color(100, 150, 255, 100) : sf::Color(40, 40, 50));
+    window.draw(bgBtn);
+    draw_text("Bild aendern...", 376, 63, 12, sf::Color::White);
+
+    if (bgBtn_hovered && clicked) {
+        std::string path = open_file_dialog();
+        if (!path.empty()) {
+            data::cfg["decoration"]["customBackground"] = path;
+            data::save_config();
+            data::img_holder.clear();
+            switch (selected_mode) {
+                case 1: osu::init(); break;
+                case 2: taiko::init(); break;
+                case 3: ctb::init(); break;
+                case 4: mania::init(); break;
+                case 5: custom::init(); break;
+            }
+        }
+    }
+
+    if (has_custom_bg) {
+        sf::RectangleShape clearBtn(sf::Vector2f(20, 20));
+        clearBtn.setPosition(492, 60);
+        clearBtn.setOutlineThickness(1);
+        clearBtn.setOutlineColor(sf::Color(255, 100, 100));
+        bool clearBtn_hovered = clearBtn.getGlobalBounds().contains(mouse_pos.x, mouse_pos.y);
+        clearBtn.setFillColor(clearBtn_hovered ? sf::Color(255, 100, 100, 100) : sf::Color(40, 40, 50));
+        window.draw(clearBtn);
+        draw_text("X", 498, 62, 14, sf::Color(255, 100, 100));
+
+        if (clearBtn_hovered && clicked) {
+            data::cfg["decoration"]["customBackground"] = "";
+            data::save_config();
+            data::img_holder.clear();
+            switch (selected_mode) {
+                case 1: osu::init(); break;
+                case 2: taiko::init(); break;
+                case 3: ctb::init(); break;
+                case 4: mania::init(); break;
+                case 5: custom::init(); break;
+            }
+        }
+    }
 
     // Draw Preview Image
     if (selected_mode >= 1 && selected_mode <= 5) {

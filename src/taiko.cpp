@@ -42,7 +42,7 @@ bool init() {
     }
 
     // importing sprites
-    bg.setTexture(data::load_texture("img/taiko/bg.png"));
+    bg.setTexture(data::load_background("img/taiko/bg.png"));
     up[0].setTexture(data::load_texture("img/taiko/leftup.png"));
     rim[0].setTexture(data::load_texture("img/taiko/leftrim.png"));
     centre[0].setTexture(data::load_texture("img/taiko/leftcentre.png"));
