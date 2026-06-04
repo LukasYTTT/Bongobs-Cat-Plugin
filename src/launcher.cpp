@@ -10,14 +10,24 @@
 std::string open_file_dialog() {
     char filename[1024];
     FILE *f = popen("zenity --file-selection --title=\"Hintergrundbild auswählen\" --file-filter=\"Bilder | *.png *.jpg *.jpeg\" 2>/dev/null", "r");
-    if (!f) return "";
-    if (fgets(filename, sizeof(filename), f) != NULL) {
+    if (f && fgets(filename, sizeof(filename), f) != NULL) {
         std::string result = filename;
         if (!result.empty() && result.back() == '\n') result.pop_back();
         pclose(f);
         return result;
     }
-    pclose(f);
+    if (f) pclose(f);
+
+    // Fallback to kdialog
+    f = popen("kdialog --getopenfilename . \"image/png image/jpeg\" 2>/dev/null", "r");
+    if (f && fgets(filename, sizeof(filename), f) != NULL) {
+        std::string result = filename;
+        if (!result.empty() && result.back() == '\n') result.pop_back();
+        pclose(f);
+        return result;
+    }
+    if (f) pclose(f);
+
     return "";
 }
 
@@ -141,17 +151,21 @@ void draw() {
     draw_text("Bild aendern...", 376, 63, 12, sf::Color::White);
 
     if (bgBtn_hovered && clicked) {
-        std::string path = open_file_dialog();
-        if (!path.empty()) {
-            data::cfg["decoration"]["customBackground"] = path;
-            data::save_config();
-            data::img_holder.clear();
-            switch (selected_mode) {
-                case 1: osu::init(); break;
-                case 2: taiko::init(); break;
-                case 3: ctb::init(); break;
-                case 4: mania::init(); break;
-                case 5: custom::init(); break;
+        if (system("which zenity > /dev/null 2>&1 || which kdialog > /dev/null 2>&1") != 0) {
+            data::error_msg("Um diese Funktion zu nutzen, muss entweder 'zenity' oder 'kdialog' installiert sein.\nBitte installiere 'zenity' in deinem Terminal (z.B. sudo pacman -S zenity oder sudo apt install zenity).", "Fehlendes Paket");
+        } else {
+            std::string path = open_file_dialog();
+            if (!path.empty()) {
+                data::cfg["decoration"]["customBackground"] = path;
+                data::save_config();
+                data::img_holder.clear();
+                switch (selected_mode) {
+                    case 1: osu::init(); break;
+                    case 2: taiko::init(); break;
+                    case 3: ctb::init(); break;
+                    case 4: mania::init(); break;
+                    case 5: custom::init(); break;
+                }
             }
         }
     }
