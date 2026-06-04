@@ -22,11 +22,22 @@ protected:
             sum += sample * sample;
         }
         double rms = std::sqrt(sum / sampleCount);
-        is_talking_flag = (rms > threshold);
+        
+        if (rms > threshold) {
+            decay = 3; // Keep mouth open for the next 300ms (3 * 100ms) even if it dips
+            is_talking_flag = true;
+        } else {
+            if (decay > 0) {
+                decay--;
+            } else {
+                is_talking_flag = false;
+            }
+        }
         return true; // continue recording
     }
 private:
     float threshold;
+    int decay = 0;
 };
 
 CatMicRecorder* recorder = nullptr;
@@ -35,7 +46,7 @@ bool init() {
     // Wenn in der Config kein mic setup ist, erstelle es
     if (!data::cfg["osu"].isMember("mic")) {
         data::cfg["osu"]["mic"]["enabled"] = true; // DEFAULT ON
-        data::cfg["osu"]["mic"]["threshold"] = 0.05f;
+        data::cfg["osu"]["mic"]["threshold"] = 0.01f;
         data::cfg["osu"]["mic"]["mouthOffsetX"] = 320; // ungefähre Mitte der originalen Katze
         data::cfg["osu"]["mic"]["mouthOffsetY"] = 170;
         data::cfg["osu"]["mic"]["mouthWidth"] = 12;
