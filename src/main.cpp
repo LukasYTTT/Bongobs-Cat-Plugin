@@ -59,10 +59,12 @@ int main(int argc, char ** argv) {
                 const char* disp = getenv("DISPLAY");
                 const char* wayl = getenv("WAYLAND_DISPLAY");
                 const char* xauth = getenv("XAUTHORITY");
+                const char* home = getenv("HOME");
                 
                 std::string env_disp = disp ? std::string("DISPLAY=") + disp : "DISPLAY=:0";
                 std::string env_wayl = wayl ? std::string("WAYLAND_DISPLAY=") + wayl : "WAYLAND_DISPLAY=wayland-0";
                 std::string env_xauth = xauth ? std::string("XAUTHORITY=") + xauth : "";
+                std::string env_home = home ? std::string("HOME=") + home : "";
 
                 std::vector<const char*> args;
                 args.push_back("pkexec");
@@ -70,6 +72,7 @@ int main(int argc, char ** argv) {
                 args.push_back(env_disp.c_str());
                 args.push_back(env_wayl.c_str());
                 if (xauth) args.push_back(env_xauth.c_str());
+                if (home) args.push_back(env_home.c_str());
                 args.push_back(target_exe);
                 for (int i = 1; i < argc; i++) args.push_back(argv[i]);
                 args.push_back(NULL);

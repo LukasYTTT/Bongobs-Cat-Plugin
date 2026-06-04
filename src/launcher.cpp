@@ -9,7 +9,14 @@
 
 std::string open_file_dialog() {
     char filename[1024];
-    FILE *f = popen("zenity --file-selection --title=\"Hintergrundbild auswählen\" --file-filter=\"Bilder | *.png *.jpg *.jpeg\" 2>/dev/null", "r");
+    std::string home_dir = "";
+    const char* home_env = getenv("HOME");
+    if (home_env) {
+        home_dir = std::string(home_env) + "/";
+    }
+
+    std::string cmd_zenity = "zenity --file-selection --title=\"Hintergrundbild auswählen\" --file-filter=\"Bilder | *.png *.jpg *.jpeg\" --filename=\"" + home_dir + "\" 2>/dev/null";
+    FILE *f = popen(cmd_zenity.c_str(), "r");
     if (f && fgets(filename, sizeof(filename), f) != NULL) {
         std::string result = filename;
         if (!result.empty() && result.back() == '\n') result.pop_back();
@@ -19,7 +26,8 @@ std::string open_file_dialog() {
     if (f) pclose(f);
 
     // Fallback to kdialog
-    f = popen("kdialog --getopenfilename . \"image/png image/jpeg\" 2>/dev/null", "r");
+    std::string cmd_kdialog = "kdialog --getopenfilename \"" + home_dir + "\" \"image/png image/jpeg\" 2>/dev/null";
+    f = popen(cmd_kdialog.c_str(), "r");
     if (f && fgets(filename, sizeof(filename), f) != NULL) {
         std::string result = filename;
         if (!result.empty() && result.back() == '\n') result.pop_back();
