@@ -15,20 +15,27 @@ std::string open_file_dialog() {
         home_dir = std::string(home_env) + "/";
     }
 
-    // Zenity
+    bool has_zenity = system("which zenity > /dev/null 2>&1") == 0;
+    bool has_kdialog = system("which kdialog > /dev/null 2>&1") == 0;
+    
     std::string cmd_zenity = "zenity --file-selection --title=\"Hintergrundbild auswählen\" --filename=\"" + home_dir + "\" 2>/dev/null";
-    FILE* f = popen(cmd_zenity.c_str(), "r");
-    if (f && fgets(filename, sizeof(filename), f) != NULL) {
-        std::string result = filename;
-        if (!result.empty() && result.back() == '\n') result.pop_back();
-        pclose(f);
-        return result;
-    }
-    if (f) pclose(f);
-
-    // Kdialog
     std::string cmd_kdialog = "kdialog --getopenfilename \"" + home_dir + "\" \"image/png image/jpeg\" 2>/dev/null";
-    f = popen(cmd_kdialog.c_str(), "r");
+    
+    std::string cmd = "";
+    const char* desktop = getenv("XDG_CURRENT_DESKTOP");
+    bool is_kde = desktop && (std::string(desktop).find("KDE") != std::string::npos);
+
+    if (is_kde && has_kdialog) {
+        cmd = cmd_kdialog;
+    } else if (has_zenity) {
+        cmd = cmd_zenity;
+    } else if (has_kdialog) {
+        cmd = cmd_kdialog;
+    } else {
+        return "";
+    }
+
+    FILE* f = popen(cmd.c_str(), "r");
     if (f && fgets(filename, sizeof(filename), f) != NULL) {
         std::string result = filename;
         if (!result.empty() && result.back() == '\n') result.pop_back();
