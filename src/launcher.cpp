@@ -50,7 +50,12 @@ void draw() {
         
         bool hovered = btn.getGlobalBounds().contains(mouse_pos.x, mouse_pos.y);
         if (hovered && clicked) {
-            selected_mode = i + 1;
+            if (selected_mode != i + 1) {
+                selected_mode = i + 1;
+                data::cfg["mode"] = selected_mode;
+                data::save_config();
+                while (!data::init()) { continue; } // Re-initialize the newly selected mode!
+            }
         }
 
         if (selected_mode == i + 1) {
@@ -69,28 +74,32 @@ void draw() {
     }
 
     // Draw Preview Image
-    std::string preview_paths[] = {
-        "img/osu/mousebg.png",
-        "img/taiko/bg.png",
-        "img/catch/bg.png",
-        "img/mania/4K/bg.png",
-        "img/osu/mousebg.png" // fallback for custom
-    };
-    
     if (selected_mode >= 1 && selected_mode <= 5) {
-        sf::Sprite preview;
-        preview.setTexture(data::load_texture(preview_paths[selected_mode - 1]));
-        preview.setPosition(220, 90);
-        preview.setScale(0.5f, 0.5f); // Scales 612x354 -> 306x177
-        window.draw(preview);
-        
         // Frame around preview
         sf::RectangleShape frame(sf::Vector2f(306, 177));
         frame.setPosition(220, 90);
-        frame.setFillColor(sf::Color::Transparent);
+        frame.setFillColor(sf::Color::Black);
         frame.setOutlineThickness(2);
         frame.setOutlineColor(sf::Color(100, 150, 255, 120));
         window.draw(frame);
+
+        // Set viewport for preview
+        sf::View previewView(sf::FloatRect(0, 0, 612, 354));
+        previewView.setViewport(sf::FloatRect(220.0f / 612.0f, 90.0f / 354.0f, 306.0f / 612.0f, 177.0f / 354.0f));
+
+        sf::View defaultView = window.getView();
+        window.setView(previewView);
+
+        // Draw the selected mode natively!
+        switch (selected_mode) {
+            case 1: osu::draw(); break;
+            case 2: taiko::draw(); break;
+            case 3: ctb::draw(); break;
+            case 4: mania::draw(); break;
+            case 5: custom::draw(); break;
+        }
+
+        window.setView(defaultView);
     }
 
     // Any Key Checkbox

@@ -14,6 +14,8 @@
 #include <atomic>
 #include <cstring>
 #include <poll.h>
+#include <X11/Xlib.h>
+#include <X11/keysym.h>
 #else
 #include <windows.h>
 #endif
@@ -63,6 +65,14 @@ std::atomic<bool> evdev_running(false);
 std::atomic<int> global_mouse_x(0);
 std::atomic<int> global_mouse_y(0);
 int VK_TO_LINUX[TOTAl_INPUT_TABLE_SIZE];
+
+bool use_x11_fallback = false;
+Display* dpy = nullptr;
+
+static int _XlibErrorHandler(Display *display, XErrorEvent *event) {
+    return true;
+}
+
 
 void evdev_loop() {
     std::vector<struct pollfd> pfds;
@@ -226,7 +236,10 @@ bool init() {
         evdev_running = true;
         evdev_thread = std::thread(evdev_loop);
     } else {
-        std::cerr << "Warning: Could not open any /dev/input/event* devices. Make sure you are in the 'input' group (sudo usermod -aG input $USER).\n";
+        std::cerr << "Warning: Could not open any /dev/input/event* devices. Falling back to X11 (osu! under Wine)." << std::endl;
+        use_x11_fallback = true;
+        XSetErrorHandler(_XlibErrorHandler);
+        dpy = XOpenDisplay(NULL);
     }
 
 #else
@@ -266,9 +279,16 @@ sf::Keyboard::Key ascii_to_key(int key_code) {
     }
 }
 
-// for some special cases of num dot and such
 bool is_pressed_fallback(int key_code) {
 #if defined(__unix__) || defined(__unix)
+    if (use_x11_fallback && dpy) {
+        KeyCode keycode = XKeysymToKeycode(dpy, key_code);
+        if (keycode != 0) {
+            char keys[32];
+            XQueryKeymap(dpy, keys);
+            return (keys[keycode / 8] & (1 << (keycode % 8))) != 0;
+        }
+    }
     return false;
 #else
     return (GetAsyncKeyState(key_code) & 0x8000) != 0;
@@ -277,6 +297,16 @@ bool is_pressed_fallback(int key_code) {
 
 bool is_pressed(int key_code) {
 #if defined(__unix__) || defined(__unix)
+    if (use_x11_fallback) {
+        if (key_code == 16) {
+            return is_pressed_fallback(sf::Keyboard::LShift) || is_pressed_fallback(sf::Keyboard::RShift);
+        } else if (key_code == 17) {
+            return is_pressed_fallback(sf::Keyboard::LControl) || is_pressed_fallback(sf::Keyboard::RControl);
+        } else {
+            return is_pressed_fallback(key_code);
+        }
+    }
+
     if (key_code < 0 || key_code >= TOTAl_INPUT_TABLE_SIZE) return false;
     int lkey = VK_TO_LINUX[key_code];
     if (lkey != 0) {
@@ -306,6 +336,14 @@ bool is_pressed(int key_code) {
 
 bool is_any_key_pressed() {
 #if defined(__unix__) || defined(__unix)
+    if (use_x11_fallback && dpy) {
+        char keys[32];
+        XQueryKeymap(dpy, keys);
+        for (int i = 0; i < 32; i++) {
+            if (keys[i] != 0) return true;
+        }
+        return false;
+    }
     // Exclude mouse moves, just check keys
     for (int i = 0; i < KEY_MAX; i++) {
         if (linux_keys[i]) return true;
@@ -566,6 +604,9 @@ void cleanup() {
     }
     for (int fd : evdev_fds) {
         close(fd);
+    }
+    if (dpy) {
+        XCloseDisplay(dpy);
     }
 #endif
 }
