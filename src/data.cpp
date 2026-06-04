@@ -4,6 +4,8 @@
 #if defined(__unix__) || defined(__unix)
 #include <unistd.h>
 #include <limits.h>
+#include <libgen.h>
+#include <string.h>
 
 extern "C" {
 #include <SDL2/SDL.h>
