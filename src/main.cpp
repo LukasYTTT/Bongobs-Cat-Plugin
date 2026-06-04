@@ -16,6 +16,11 @@ sf::RenderWindow window;
 #include <fcntl.h>
 
 int main(int argc, char ** argv) {
+    bool skip_launcher = false;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--run-cat") == 0) skip_launcher = true;
+    }
+
     // Automatically change working directory to the parent of the 'bin' folder
     char exe_path[PATH_MAX];
     ssize_t count = readlink("/proc/self/exe", exe_path, PATH_MAX);
@@ -58,18 +63,25 @@ int main(int argc, char ** argv) {
                 std::string env_wayl = wayl ? std::string("WAYLAND_DISPLAY=") + wayl : "WAYLAND_DISPLAY=wayland-0";
                 std::string env_xauth = xauth ? std::string("XAUTHORITY=") + xauth : "";
 
-                if (xauth) {
-                    execlp("pkexec", "pkexec", "env", env_disp.c_str(), env_wayl.c_str(), env_xauth.c_str(), target_exe, NULL);
-                } else {
-                    execlp("pkexec", "pkexec", "env", env_disp.c_str(), env_wayl.c_str(), target_exe, NULL);
-                }
-                // If execlp returns, pkexec failed or was cancelled by user, so we continue with X11 fallback
+                std::vector<const char*> args;
+                args.push_back("pkexec");
+                args.push_back("env");
+                args.push_back(env_disp.c_str());
+                args.push_back(env_wayl.c_str());
+                if (xauth) args.push_back(env_xauth.c_str());
+                args.push_back(target_exe);
+                for (int i = 1; i < argc; i++) args.push_back(argv[i]);
+                args.push_back(NULL);
+
+                execvp("pkexec", (char* const*)args.data());
+                // If execvp returns, pkexec failed or was cancelled by user, so we continue with X11 fallback
             }
         }
     }
 
 #else
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    bool skip_launcher = false;
 #endif
 
     window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::Titlebar | sf::Style::Close);
@@ -89,19 +101,51 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         return EXIT_FAILURE;
     }
 
+    if (skip_launcher) {
+        launcher::is_launcher = false;
+    }
+
     bool is_reload = false;
     bool is_show_input_debug = false;
     bool was_launcher = true;
+    bool last_is_green = false;
+
+    bool is_dragging = false;
+    sf::Vector2i drag_offset;
 
     while (window.isOpen()) {
         if (was_launcher && !launcher::is_launcher) {
             was_launcher = false;
             // Wenn Green Screen aktiv ist (wird typischerweise für OBS genutzt), automatisch den Rahmen entfernen!
-            bool is_green = (data::cfg["decoration"]["rgb"][0].asInt() == 0 && data::cfg["decoration"]["rgb"][1].asInt() == 255);
-            if (is_green) {
+            last_is_green = (data::cfg["decoration"]["rgb"][0].asInt() == 0 && data::cfg["decoration"]["rgb"][1].asInt() == 255);
+            if (last_is_green) {
                 window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::None);
                 window.setFramerateLimit(MAX_FRAMERATE);
             }
+        }
+
+        if (!launcher::is_launcher) {
+#if defined(__unix__) || defined(__unix)
+            struct stat st;
+            if (stat("config.json", &st) == 0) {
+                static time_t last_mtime = st.st_mtime;
+                if (st.st_mtime > last_mtime) {
+                    last_mtime = st.st_mtime;
+                    while (!data::init()) { continue; }
+
+                    bool is_green = (data::cfg["decoration"]["rgb"][0].asInt() == 0 && data::cfg["decoration"]["rgb"][1].asInt() == 255);
+                    if (is_green != last_is_green) {
+                        last_is_green = is_green;
+                        if (is_green) {
+                            window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::None);
+                        } else {
+                            window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::Titlebar | sf::Style::Close);
+                        }
+                        window.setFramerateLimit(MAX_FRAMERATE);
+                    }
+                }
+            }
+#endif
         }
 
         sf::Event event;
@@ -109,6 +153,23 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             switch (event.type) {
             case sf::Event::Closed:
                 window.close();
+                break;
+
+            case sf::Event::MouseButtonPressed:
+                if (event.mouseButton.button == sf::Mouse::Left && !launcher::is_launcher) {
+                    is_dragging = true;
+                    drag_offset = window.getPosition() - sf::Mouse::getPosition();
+                }
+                break;
+            case sf::Event::MouseButtonReleased:
+                if (event.mouseButton.button == sf::Mouse::Left) {
+                    is_dragging = false;
+                }
+                break;
+            case sf::Event::MouseMoved:
+                if (is_dragging && !launcher::is_launcher) {
+                    window.setPosition(sf::Mouse::getPosition() + drag_offset);
+                }
                 break;
 
             case sf::Event::KeyPressed:

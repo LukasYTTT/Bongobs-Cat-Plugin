@@ -1,6 +1,11 @@
 #include "header.hpp"
 
 #include <stdio.h>
+#if defined(__unix__) || defined(__unix)
+#include <unistd.h>
+#include <signal.h>
+#include <limits.h>
+#endif
 
 std::string open_file_dialog() {
     char filename[1024];
@@ -237,7 +242,28 @@ void draw() {
         data::cfg["taiko"]["anyKey"] = any_key_enabled;
         data::save_config(); // Fails gracefully in AppImage
         
-        is_launcher = false; // Exit launcher
+#if defined(__unix__) || defined(__unix)
+        static pid_t cat_pid = 0;
+        if (cat_pid > 0) {
+            kill(cat_pid, SIGTERM);
+        }
+
+        cat_pid = fork();
+        if (cat_pid == 0) {
+            const char* appimage_env = getenv("APPIMAGE");
+            if (appimage_env) {
+                execlp(appimage_env, appimage_env, "--run-cat", NULL);
+            } else {
+                char exe_path[PATH_MAX];
+                ssize_t count = readlink("/proc/self/exe", exe_path, PATH_MAX);
+                if (count != -1) {
+                    exe_path[count] = '\0';
+                    execlp(exe_path, exe_path, "--run-cat", NULL);
+                }
+            }
+            exit(1);
+        }
+#endif
     }
     
     window.draw(startBtn);
