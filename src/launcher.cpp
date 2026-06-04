@@ -15,47 +15,8 @@ std::string open_file_dialog() {
         home_dir = std::string(home_env) + "/";
     }
 
-    bool has_python = system("which python3 > /dev/null 2>&1") == 0;
     bool has_zenity = system("which zenity > /dev/null 2>&1") == 0;
     bool has_kdialog = system("which kdialog > /dev/null 2>&1") == 0;
-
-    std::string cmd_python = 
-        "env -u LD_LIBRARY_PATH -u PYTHONPATH -u PYTHONHOME python3 -c \"\n"
-        "import sys\n"
-        "try:\n"
-        "    import gi\n"
-        "    gi.require_version('Gtk', '3.0')\n"
-        "    from gi.repository import Gtk, GdkPixbuf\n"
-        "except Exception:\n"
-        "    sys.exit(1)\n"
-        "def update_preview(chooser, preview):\n"
-        "    filename = chooser.get_preview_filename()\n"
-        "    if filename:\n"
-        "        try:\n"
-        "            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(filename, 256, 256)\n"
-        "            preview.set_from_pixbuf(pixbuf)\n"
-        "            chooser.set_preview_widget_active(True)\n"
-        "        except Exception:\n"
-        "            chooser.set_preview_widget_active(False)\n"
-        "    else:\n"
-        "        chooser.set_preview_widget_active(False)\n"
-        "dialog = Gtk.FileChooserDialog(title='Hintergrundbild auswählen', action=Gtk.FileChooserAction.OPEN)\n"
-        "dialog.add_buttons('Abbrechen', Gtk.ResponseType.CANCEL, 'Öffnen', Gtk.ResponseType.OK)\n"
-        "if len(sys.argv) > 1 and sys.argv[1]: dialog.set_current_folder(sys.argv[1])\n"
-        "filter_img = Gtk.FileFilter()\n"
-        "filter_img.set_name('Bilder')\n"
-        "filter_img.add_pattern('*.png')\n"
-        "filter_img.add_pattern('*.jpg')\n"
-        "filter_img.add_pattern('*.jpeg')\n"
-        "dialog.add_filter(filter_img)\n"
-        "preview = Gtk.Image()\n"
-        "dialog.set_preview_widget(preview)\n"
-        "dialog.connect('update-preview', update_preview, preview)\n"
-        "response = dialog.run()\n"
-        "if response == Gtk.ResponseType.OK:\n"
-        "    print(dialog.get_filename())\n"
-        "dialog.destroy()\n"
-        "\" \"" + home_dir + "\" 2>/dev/null";
 
     std::string cmd_zenity = "zenity --file-selection --title=\"Hintergrundbild auswählen\" --filename=\"" + home_dir + "\" 2>/dev/null";
     std::string cmd_kdialog = "kdialog --getopenfilename \"" + home_dir + "\" \"image/png image/jpeg\" 2>/dev/null";
@@ -66,8 +27,6 @@ std::string open_file_dialog() {
 
     if (is_kde && has_kdialog) {
         cmd = cmd_kdialog;
-    } else if (has_python) {
-        cmd = cmd_python;
     } else if (has_zenity) {
         cmd = cmd_zenity;
     } else if (has_kdialog) {
@@ -212,8 +171,8 @@ void draw() {
     draw_text("Bild aendern...", 376, 63, 12, sf::Color::White);
 
     if (bgBtn_hovered && clicked) {
-        if (system("which python3 > /dev/null 2>&1 || which zenity > /dev/null 2>&1 || which kdialog > /dev/null 2>&1") != 0) {
-            data::error_msg("Um diese Funktion zu nutzen, muss entweder 'python3' (mit python3-gi), 'zenity' oder 'kdialog' installiert sein.\nBitte installiere 'zenity' in deinem Terminal (z.B. sudo pacman -S zenity oder sudo apt install zenity).", "Fehlendes Paket");
+        if (system("which zenity > /dev/null 2>&1 || which kdialog > /dev/null 2>&1") != 0) {
+            data::error_msg("Um diese Funktion zu nutzen, muss entweder 'zenity' oder 'kdialog' installiert sein.\nBitte installiere 'zenity' in deinem Terminal (z.B. sudo pacman -S zenity oder sudo apt install zenity).", "Fehlendes Paket");
         } else {
             std::string path = open_file_dialog();
             if (!path.empty()) {
