@@ -7,6 +7,22 @@
 #include <limits.h>
 #endif
 
+bool auto_install_dialogs() {
+    if (system("which zenity > /dev/null 2>&1 || which kdialog > /dev/null 2>&1") == 0) {
+        return true;
+    }
+    std::string script = 
+        "if command -v pkexec >/dev/null 2>&1; then "
+        "  if command -v pacman >/dev/null 2>&1; then pkexec pacman -S --noconfirm zenity; "
+        "  elif command -v apt-get >/dev/null 2>&1; then pkexec apt-get install -y zenity; "
+        "  elif command -v dnf >/dev/null 2>&1; then pkexec dnf install -y zenity; "
+        "  elif command -v zypper >/dev/null 2>&1; then pkexec zypper install -y zenity; "
+        "  else exit 1; fi "
+        "else exit 1; fi";
+    system(script.c_str());
+    return system("which zenity > /dev/null 2>&1 || which kdialog > /dev/null 2>&1") == 0;
+}
+
 std::string open_file_dialog() {
     char filename[1024];
     std::string home_dir = "";
@@ -18,8 +34,10 @@ std::string open_file_dialog() {
     bool has_zenity = system("which zenity > /dev/null 2>&1") == 0;
     bool has_kdialog = system("which kdialog > /dev/null 2>&1") == 0;
 
-    std::string cmd_zenity = "zenity --file-selection --title=\"Hintergrundbild auswählen\" --filename=\"" + home_dir + "\" 2>/dev/null";
-    std::string cmd_kdialog = "kdialog --getopenfilename \"" + home_dir + "\" \"image/png image/jpeg\" 2>/dev/null";
+    std::string clean_env = "env -i DISPLAY=\"$DISPLAY\" WAYLAND_DISPLAY=\"$WAYLAND_DISPLAY\" XDG_RUNTIME_DIR=\"$XDG_RUNTIME_DIR\" XAUTHORITY=\"$XAUTHORITY\" HOME=\"$HOME\" USER=\"$USER\" PATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\" ";
+    
+    std::string cmd_zenity = clean_env + "zenity --file-selection --title=\"Hintergrundbild auswählen\" --filename=\"" + home_dir + "\" 2>/dev/null";
+    std::string cmd_kdialog = clean_env + "kdialog --getopenfilename \"" + home_dir + "\" \"image/png image/jpeg\" 2>/dev/null";
     
     std::string cmd = "";
     const char* desktop = getenv("XDG_CURRENT_DESKTOP");
@@ -171,8 +189,8 @@ void draw() {
     draw_text("Bild aendern...", 376, 63, 12, sf::Color::White);
 
     if (bgBtn_hovered && clicked) {
-        if (system("which zenity > /dev/null 2>&1 || which kdialog > /dev/null 2>&1") != 0) {
-            data::error_msg("Um diese Funktion zu nutzen, muss entweder 'zenity' oder 'kdialog' installiert sein.\nBitte installiere 'zenity' in deinem Terminal (z.B. sudo pacman -S zenity oder sudo apt install zenity).", "Fehlendes Paket");
+        if (!auto_install_dialogs()) {
+            data::error_msg("Leider konnte 'zenity' nicht automatisch installiert werden.\nBitte installiere 'zenity' manuell in deinem Terminal (z.B. sudo pacman -S zenity oder sudo apt install zenity).", "Fehlendes Paket");
         } else {
             std::string path = open_file_dialog();
             if (!path.empty()) {
