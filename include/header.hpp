@@ -93,4 +93,5 @@ namespace launcher {
 extern bool is_launcher;
 bool init();
 void draw();
+void handle_scroll(float delta);
 }; // namespace launcher

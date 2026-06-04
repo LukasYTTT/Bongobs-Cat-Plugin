@@ -160,6 +160,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                 window.close();
                 break;
 
+            case sf::Event::MouseWheelScrolled:
+                if (launcher::is_launcher) {
+                    launcher::handle_scroll(event.mouseWheelScroll.delta);
+                }
+                break;
+
             case sf::Event::MouseButtonPressed:
                 if (event.mouseButton.button == sf::Mouse::Left && !launcher::is_launcher) {
                     is_dragging = true;
@@ -229,7 +235,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             sf::Sprite custom_bg_sprite(data::custom_bg_tex);
             int ox = data::cfg["decoration"]["customBackgroundOffsetX"].asInt();
             int oy = data::cfg["decoration"]["customBackgroundOffsetY"].asInt();
+            double sc = data::cfg["decoration"].isMember("customBackgroundScale") ? data::cfg["decoration"]["customBackgroundScale"].asDouble() : 1.0;
             custom_bg_sprite.setPosition(ox, oy);
+            custom_bg_sprite.setScale(sc, sc);
             window.draw(custom_bg_sprite);
         }
         

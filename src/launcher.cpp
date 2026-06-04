@@ -283,7 +283,9 @@ void draw() {
             sf::Sprite custom_bg_sprite(data::custom_bg_tex);
             int ox = data::cfg["decoration"]["customBackgroundOffsetX"].asInt();
             int oy = data::cfg["decoration"]["customBackgroundOffsetY"].asInt();
+            double sc = data::cfg["decoration"].isMember("customBackgroundScale") ? data::cfg["decoration"]["customBackgroundScale"].asDouble() : 1.0;
             custom_bg_sprite.setPosition(ox, oy);
+            custom_bg_sprite.setScale(sc, sc);
             window.draw(custom_bg_sprite);
         }
 
@@ -299,7 +301,7 @@ void draw() {
         window.setView(defaultView);
         
         if (data::has_custom_bg) {
-            draw_text("Tipp: Du kannst das Bild im Fenster mit der Maus ziehen!", 220, 275, 12, sf::Color(150, 200, 255));
+            draw_text("Tipp: Ziehe das Bild mit der Maus oder skaliere es mit dem Mausrad!", 218, 275, 11, sf::Color(150, 200, 255));
         }
     }
 
@@ -386,6 +388,24 @@ void draw() {
     }
     
     window.draw(startBtn);
-    draw_text("Bongo Cat Starten!", 295, 323, 16, sf::Color::White);
+    draw_text("Bongo Cat Starten!", 295, 363, 16, sf::Color::White);
 }
+
+void handle_scroll(float delta) {
+    if (!data::has_custom_bg) return;
+    
+    auto mouse_pos = sf::Mouse::getPosition(window);
+    sf::FloatRect previewBounds(220, 90, 306, 177);
+    if (previewBounds.contains(mouse_pos.x, mouse_pos.y)) {
+        double current_scale = data::cfg["decoration"].isMember("customBackgroundScale") ? data::cfg["decoration"]["customBackgroundScale"].asDouble() : 1.0;
+        
+        current_scale += delta * 0.05; // 5% per scroll tick
+        if (current_scale < 0.1) current_scale = 0.1;
+        if (current_scale > 10.0) current_scale = 10.0;
+        
+        data::cfg["decoration"]["customBackgroundScale"] = current_scale;
+        data::save_config();
+    }
+}
+
 }; // namespace launcher
