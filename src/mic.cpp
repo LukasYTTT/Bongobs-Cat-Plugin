@@ -86,4 +86,23 @@ bool is_talking() {
     return is_talking_flag.load();
 }
 
+void draw(sf::RenderWindow& window) {
+    if (is_talking() && data::cfg["osu"].isMember("mic")) {
+        int mx = data::cfg["osu"]["mic"]["mouthOffsetX"].asInt();
+        int my = data::cfg["osu"]["mic"]["mouthOffsetY"].asInt();
+        int mw = data::cfg["osu"]["mic"]["mouthWidth"].asInt();
+        int mh = data::cfg["osu"]["mic"]["mouthHeight"].asInt();
+        
+        double mScale = data::cfg["decoration"].isMember("mouthScale") ? data::cfg["decoration"]["mouthScale"].asDouble() : 1.0;
+        mw = (int)(mw * mScale);
+        mh = (int)(mh * mScale);
+        
+        sf::CircleShape mouth(1.f);
+        mouth.setScale(mw, mh);
+        mouth.setFillColor(sf::Color::Black);
+        mouth.setPosition(mx, my);
+        window.draw(mouth);
+    }
+}
+
 }; // namespace mic

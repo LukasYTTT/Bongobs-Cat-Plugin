@@ -101,10 +101,12 @@ namespace mic {
     bool init();
     void clean();
     bool is_talking();
+    void draw(sf::RenderWindow &window);
 }; // namespace mic
 
 namespace face {
     void init();
     void handle_key(sf::Keyboard::Key key);
-    void draw(sf::RenderWindow &window);
+    void draw_under(sf::RenderWindow &window);
+    void draw_over(sf::RenderWindow &window);
 }; // namespace face

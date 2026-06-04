@@ -370,5 +370,10 @@ void draw() {
     if (is_toggle_smoke) {
         window.draw(smoke);
     }
+
+    face::draw_under(window);
+    mic::draw(window);
+    face::draw_over(window);
 }
+
 }; // namespace custom

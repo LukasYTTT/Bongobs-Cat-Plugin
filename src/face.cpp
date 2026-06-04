@@ -79,13 +79,21 @@ void handle_key(sf::Keyboard::Key key) {
     }
 }
 
-void draw(sf::RenderWindow& window) {
+void draw_under(sf::RenderWindow& window) {
     for (auto& pair : faces) {
-        if (pair.second.active) {
+        if (pair.second.active && pair.first != sf::Keyboard::F2) {
             sf::Sprite sprite;
             sprite.setTexture(pair.second.tex);
             window.draw(sprite);
         }
+    }
+}
+
+void draw_over(sf::RenderWindow& window) {
+    if (faces.count(sf::Keyboard::F2) && faces[sf::Keyboard::F2].active) {
+        sf::Sprite sprite;
+        sprite.setTexture(faces[sf::Keyboard::F2].tex);
+        window.draw(sprite);
     }
 }
 
