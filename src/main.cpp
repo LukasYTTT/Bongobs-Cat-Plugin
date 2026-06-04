@@ -124,9 +124,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     bool is_dragging = false;
     bool is_dragging_bg = false;
     bool is_dragging_cat = false;
+    bool is_dragging_mouth = false;
     sf::Vector2i drag_offset;
     sf::Vector2i bg_drag_last_pos;
     sf::Vector2i cat_drag_last_pos;
+    sf::Vector2i mouth_drag_last_pos;
 
     while (window.isOpen()) {
         if (was_launcher && !launcher::is_launcher) {
@@ -195,17 +197,28 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                         data::cfg["decoration"]["customBackgroundScale"] = current_scale;
                         data::save_config();
                     }
+                } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) || sf::Keyboard::isKeyPressed(sf::Keyboard::RAlt)) {
+                    double mScale = data::cfg["decoration"].isMember("mouthScale") ? data::cfg["decoration"]["mouthScale"].asDouble() : 1.0;
+                    mScale += event.mouseWheelScroll.delta * 0.05;
+                    if (mScale < 0.1) mScale = 0.1;
+                    if (mScale > 10.0) mScale = 10.0;
+                    data::cfg["decoration"]["mouthScale"] = mScale;
+                    data::save_config();
                 }
                 break;
 
             case sf::Event::MouseButtonPressed:
                 if (event.mouseButton.button == sf::Mouse::Left && !launcher::is_launcher) {
-                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) {
+                    sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
+                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) || sf::Keyboard::isKeyPressed(sf::Keyboard::RAlt)) {
+                        is_dragging_mouth = true;
+                        mouth_drag_last_pos = mouse_pos;
+                    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) {
                         is_dragging_cat = true;
-                        cat_drag_last_pos = sf::Mouse::getPosition(window);
+                        cat_drag_last_pos = mouse_pos;
                     } else if ((sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) && data::has_custom_bg) {
                         is_dragging_bg = true;
-                        bg_drag_last_pos = sf::Mouse::getPosition(window);
+                        bg_drag_last_pos = mouse_pos;
                     } else {
                         is_dragging = true;
                         drag_offset = window.getPosition() - sf::Mouse::getPosition();
@@ -217,13 +230,26 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                     is_dragging = false;
                     is_dragging_bg = false;
                     is_dragging_cat = false;
+                    is_dragging_mouth = false;
                 }
                 break;
             case sf::Event::MouseMoved:
                 if (!launcher::is_launcher) {
                     if (is_dragging) {
                         window.setPosition(sf::Mouse::getPosition() + drag_offset);
-                    } else if (is_dragging_cat) {
+                    } else if (is_dragging_mouth) {
+                    sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
+                    int dx = mouse_pos.x - mouth_drag_last_pos.x;
+                    int dy = mouse_pos.y - mouth_drag_last_pos.y;
+                    if (dx != 0 || dy != 0) {
+                        int mx = data::cfg["osu"]["mic"]["mouthOffsetX"].asInt();
+                        int my = data::cfg["osu"]["mic"]["mouthOffsetY"].asInt();
+                        data::cfg["osu"]["mic"]["mouthOffsetX"] = mx + dx;
+                        data::cfg["osu"]["mic"]["mouthOffsetY"] = my + dy;
+                        data::save_config();
+                        mouth_drag_last_pos = mouse_pos;
+                    }
+                } else if (is_dragging_cat) {
                         int dx = sf::Mouse::getPosition(window).x - cat_drag_last_pos.x;
                         int dy = sf::Mouse::getPosition(window).y - cat_drag_last_pos.y;
                         double cScale = data::cfg["decoration"].isMember("catScale") ? data::cfg["decoration"]["catScale"].asDouble() : 1.0;
