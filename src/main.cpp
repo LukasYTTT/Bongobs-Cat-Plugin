@@ -60,11 +60,13 @@ int main(int argc, char ** argv) {
                 const char* wayl = getenv("WAYLAND_DISPLAY");
                 const char* xauth = getenv("XAUTHORITY");
                 const char* home = getenv("HOME");
+                const char* xdg_rt = getenv("XDG_RUNTIME_DIR");
                 
                 std::string env_disp = disp ? std::string("DISPLAY=") + disp : "DISPLAY=:0";
                 std::string env_wayl = wayl ? std::string("WAYLAND_DISPLAY=") + wayl : "WAYLAND_DISPLAY=wayland-0";
                 std::string env_xauth = xauth ? std::string("XAUTHORITY=") + xauth : "";
                 std::string env_home = home ? std::string("HOME=") + home : "";
+                std::string env_xdg = xdg_rt ? std::string("XDG_RUNTIME_DIR=") + xdg_rt : "";
 
                 std::vector<const char*> args;
                 args.push_back("pkexec");
@@ -73,6 +75,7 @@ int main(int argc, char ** argv) {
                 args.push_back(env_wayl.c_str());
                 if (xauth) args.push_back(env_xauth.c_str());
                 if (home) args.push_back(env_home.c_str());
+                if (xdg_rt) args.push_back(env_xdg.c_str());
                 args.push_back(target_exe);
                 for (int i = 1; i < argc; i++) args.push_back(argv[i]);
                 args.push_back(NULL);
@@ -82,6 +85,7 @@ int main(int argc, char ** argv) {
             }
         }
     }
+
 #else
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     bool skip_launcher = false;
@@ -94,10 +98,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     }
     window.setFramerateLimit(MAX_FRAMERATE);
 
-    // loading configs
     while (!data::init()) {
         continue;
     }
+    mic::init();
 
     // initialize input
     if (!input::init()) {
@@ -147,6 +151,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                 if (st.st_mtime > last_mtime) {
                     last_mtime = st.st_mtime;
                     while (!data::init()) { continue; }
+                    mic::init();
 
                     bool is_green = (data::cfg["decoration"]["rgb"][0].asInt() == 0 && data::cfg["decoration"]["rgb"][1].asInt() == 255);
                     if (is_green != last_is_green) {
@@ -337,7 +342,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         window.display();
     }
 
+    mic::clean();
     input::cleanup();
     return 0;
 }
-
