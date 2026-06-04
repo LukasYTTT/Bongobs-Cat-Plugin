@@ -127,9 +127,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     while (window.isOpen()) {
         if (was_launcher && !launcher::is_launcher) {
             was_launcher = false;
-            // Wenn Green Screen aktiv ist (wird typischerweise für OBS genutzt), automatisch den Rahmen entfernen!
+            // Wenn Green Screen oder ein eigener Hintergrund aktiv ist, automatisch den Rahmen entfernen!
             last_is_green = (data::cfg["decoration"]["rgb"][0].asInt() == 0 && data::cfg["decoration"]["rgb"][1].asInt() == 255);
-            if (last_is_green) {
+            if (last_is_green || data::has_custom_bg) {
                 window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::None);
             } else {
                 window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::Titlebar | sf::Style::Close);
@@ -151,7 +151,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                     bool is_green = (data::cfg["decoration"]["rgb"][0].asInt() == 0 && data::cfg["decoration"]["rgb"][1].asInt() == 255);
                     if (is_green != last_is_green) {
                         last_is_green = is_green;
-                        if (is_green) {
+                        if (is_green || data::has_custom_bg) {
                             window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::None);
                         } else {
                             window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::Titlebar | sf::Style::Close);
