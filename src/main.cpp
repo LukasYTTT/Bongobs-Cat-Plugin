@@ -14,6 +14,7 @@ sf::RenderWindow window;
 #if defined(__unix__) || defined(__unix)
 #include <dirent.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 
 int main(int argc, char ** argv) {
     bool skip_launcher = false;
