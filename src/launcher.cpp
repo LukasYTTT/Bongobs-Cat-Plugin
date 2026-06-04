@@ -50,8 +50,10 @@ std::string open_file_dialog() {
             if (home_env) {
                 home_dir = std::string(home_env);
             }
-            std::string save_path = home_dir + "/.config/bongocat-osu/custom_bg_dl.png";
-            std::string dl_cmd = "wget -qO \"" + save_path + "\" \"" + result + "\"";
+            std::string save_dir = home_dir + "/.config/bongocat-osu";
+            system(("mkdir -p \"" + save_dir + "\"").c_str());
+            std::string save_path = save_dir + "/custom_bg_dl.png";
+            std::string dl_cmd = "if command -v curl >/dev/null 2>&1; then curl -s -L -o \"" + save_path + "\" \"" + result + "\"; else wget -qO \"" + save_path + "\" \"" + result + "\"; fi";
             if (system(dl_cmd.c_str()) == 0) {
                 return save_path;
             }
