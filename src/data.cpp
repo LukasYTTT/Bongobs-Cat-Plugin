@@ -160,8 +160,21 @@ bool update(Json::Value &cfg_default, Json::Value &cfg) {
     return is_update;
 }
 
+std::string get_config_path() {
+#if defined(__unix__) || defined(__unix)
+    const char* appimage_env = getenv("APPIMAGE");
+    if (appimage_env) {
+        char path_copy[PATH_MAX];
+        strncpy(path_copy, appimage_env, PATH_MAX);
+        char* dir = dirname(path_copy);
+        return std::string(dir) + "/config.json";
+    }
+#endif
+    return "config.json";
+}
+
 void save_config() {
-    std::ofstream cfg_file("config.json", std::ofstream::binary);
+    std::ofstream cfg_file(get_config_path(), std::ofstream::binary);
     Json::StreamWriterBuilder builder;
     builder["indentation"] = "    ";
     std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
@@ -171,7 +184,7 @@ void save_config() {
 bool init() {
     while (true) {
         create_config();
-        std::ifstream cfg_file("config.json", std::ifstream::binary);
+        std::ifstream cfg_file(get_config_path(), std::ifstream::binary);
         if (!cfg_file.good()) {
             break;
         }

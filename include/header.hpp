@@ -26,6 +26,8 @@ namespace data {
 extern Json::Value cfg;
 extern std::map<std::string, sf::Texture> img_holder;
 
+std::string get_config_path();
+
 void error_msg(std::string error, std::string title);
 
 bool init();

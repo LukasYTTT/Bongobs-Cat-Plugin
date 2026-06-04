@@ -128,7 +128,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         if (!launcher::is_launcher) {
 #if defined(__unix__) || defined(__unix)
             struct stat st;
-            if (stat("config.json", &st) == 0) {
+            std::string cfg_path = data::get_config_path();
+            if (stat(cfg_path.c_str(), &st) == 0) {
                 static time_t last_mtime = st.st_mtime;
                 if (st.st_mtime > last_mtime) {
                     last_mtime = st.st_mtime;
