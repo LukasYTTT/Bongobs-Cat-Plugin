@@ -91,8 +91,19 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
     bool is_reload = false;
     bool is_show_input_debug = false;
+    bool was_launcher = true;
 
     while (window.isOpen()) {
+        if (was_launcher && !launcher::is_launcher) {
+            was_launcher = false;
+            // Wenn Green Screen aktiv ist (wird typischerweise für OBS genutzt), automatisch den Rahmen entfernen!
+            bool is_green = (data::cfg["decoration"]["rgb"][0].asInt() == 0 && data::cfg["decoration"]["rgb"][1].asInt() == 255);
+            if (is_green) {
+                window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::None);
+                window.setFramerateLimit(MAX_FRAMERATE);
+            }
+        }
+
         sf::Event event;
         while (window.pollEvent(event)) {
             switch (event.type) {
@@ -101,6 +112,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                 break;
 
             case sf::Event::KeyPressed:
+                // press ESC to close (important for borderless mode)
+                if (event.key.code == sf::Keyboard::Escape) {
+                    window.close();
+                    break;
+                }
+
                 // get reload config prompt
                 if (event.key.code == sf::Keyboard::R && event.key.control) {
                     if (!is_reload) {
