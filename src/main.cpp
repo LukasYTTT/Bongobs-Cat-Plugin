@@ -12,6 +12,9 @@
 sf::RenderWindow window;
 
 #if defined(__unix__) || defined(__unix)
+#include <dirent.h>
+#include <fcntl.h>
+
 int main(int argc, char ** argv) {
     // Automatically change working directory to the parent of the 'bin' folder
     char exe_path[PATH_MAX];
@@ -19,12 +22,40 @@ int main(int argc, char ** argv) {
     if (count != -1) {
         exe_path[count] = '\0';
         char* dir = dirname(exe_path); // gets the directory containing the executable (e.g. .../bin)
-        // If we want the parent directory (root of the bongocat project), we go one level up
-        // Note: we just assume the executable is in bin/ or root. Let's try changing to dir and then if "bin" is in the path, go up.
-        // Even simpler: the structure is always <dir>/bin/bongo. So `dirname(dir)` gives us the project root.
         char* parent_dir = dirname(dir);
         chdir(parent_dir);
     }
+
+    // Check if we have evdev access, if not and we are not root, prompt for password via pkexec
+    if (geteuid() != 0) {
+        bool can_open_any = false;
+        DIR *dir = opendir("/dev/input");
+        if (dir) {
+            struct dirent *ent;
+            while ((ent = readdir(dir)) != NULL) {
+                if (strncmp(ent->d_name, "event", 5) == 0) {
+                    std::string path = std::string("/dev/input/") + ent->d_name;
+                    int fd = open(path.c_str(), O_RDONLY);
+                    if (fd >= 0) {
+                        close(fd);
+                        can_open_any = true;
+                        break;
+                    }
+                }
+            }
+            closedir(dir);
+        }
+
+        if (!can_open_any) {
+            const char* appimage_env = getenv("APPIMAGE");
+            const char* target_exe = appimage_env ? appimage_env : exe_path;
+            if (system("which pkexec > /dev/null 2>&1") == 0) {
+                execlp("pkexec", "pkexec", target_exe, NULL);
+                // If execlp returns, pkexec failed or was cancelled by user, so we continue with X11 fallback
+            }
+        }
+    }
+
 #else
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 #endif
