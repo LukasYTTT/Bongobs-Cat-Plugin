@@ -119,8 +119,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
     bool is_dragging = false;
     bool is_dragging_bg = false;
+    bool is_dragging_cat = false;
     sf::Vector2i drag_offset;
     sf::Vector2i bg_drag_last_pos;
+    sf::Vector2i cat_drag_last_pos;
 
     while (window.isOpen()) {
         if (was_launcher && !launcher::is_launcher) {
@@ -172,6 +174,13 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             case sf::Event::MouseWheelScrolled:
                 if (launcher::is_launcher) {
                     launcher::handle_scroll(event.mouseWheelScroll.delta);
+                } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) {
+                    double cScale = data::cfg["decoration"].isMember("catScale") ? data::cfg["decoration"]["catScale"].asDouble() : 1.0;
+                    cScale += event.mouseWheelScroll.delta * 0.05;
+                    if (cScale < 0.1) cScale = 0.1;
+                    if (cScale > 10.0) cScale = 10.0;
+                    data::cfg["decoration"]["catScale"] = cScale;
+                    data::save_config();
                 } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) {
                     if (data::has_custom_bg) {
                         double current_scale = data::cfg["decoration"].isMember("customBackgroundScale") ? data::cfg["decoration"]["customBackgroundScale"].asDouble() : 1.0;
@@ -186,7 +195,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
             case sf::Event::MouseButtonPressed:
                 if (event.mouseButton.button == sf::Mouse::Left && !launcher::is_launcher) {
-                    if ((sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) && data::has_custom_bg) {
+                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) {
+                        is_dragging_cat = true;
+                        cat_drag_last_pos = sf::Mouse::getPosition(window);
+                    } else if ((sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) && data::has_custom_bg) {
                         is_dragging_bg = true;
                         bg_drag_last_pos = sf::Mouse::getPosition(window);
                     } else {
@@ -199,12 +211,23 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                 if (event.mouseButton.button == sf::Mouse::Left) {
                     is_dragging = false;
                     is_dragging_bg = false;
+                    is_dragging_cat = false;
                 }
                 break;
             case sf::Event::MouseMoved:
                 if (!launcher::is_launcher) {
                     if (is_dragging) {
                         window.setPosition(sf::Mouse::getPosition() + drag_offset);
+                    } else if (is_dragging_cat) {
+                        int dx = sf::Mouse::getPosition(window).x - cat_drag_last_pos.x;
+                        int dy = sf::Mouse::getPosition(window).y - cat_drag_last_pos.y;
+                        double cScale = data::cfg["decoration"].isMember("catScale") ? data::cfg["decoration"]["catScale"].asDouble() : 1.0;
+                        double cOffX = data::cfg["decoration"].isMember("catOffsetX") ? data::cfg["decoration"]["catOffsetX"].asDouble() : 0.0;
+                        double cOffY = data::cfg["decoration"].isMember("catOffsetY") ? data::cfg["decoration"]["catOffsetY"].asDouble() : 0.0;
+                        data::cfg["decoration"]["catOffsetX"] = cOffX + dx / cScale;
+                        data::cfg["decoration"]["catOffsetY"] = cOffY + dy / cScale;
+                        data::save_config();
+                        cat_drag_last_pos = sf::Mouse::getPosition(window);
                     } else if (is_dragging_bg) {
                         int dx = sf::Mouse::getPosition(window).x - bg_drag_last_pos.x;
                         int dy = sf::Mouse::getPosition(window).y - bg_drag_last_pos.y;
@@ -279,6 +302,14 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         if (launcher::is_launcher) {
             launcher::draw();
         } else {
+            sf::View catView(sf::FloatRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT));
+            double cScale = data::cfg["decoration"].isMember("catScale") ? data::cfg["decoration"]["catScale"].asDouble() : 1.0;
+            double cOffX = data::cfg["decoration"].isMember("catOffsetX") ? data::cfg["decoration"]["catOffsetX"].asDouble() : 0.0;
+            double cOffY = data::cfg["decoration"].isMember("catOffsetY") ? data::cfg["decoration"]["catOffsetY"].asDouble() : 0.0;
+            catView.zoom(1.0 / cScale);
+            catView.move(-cOffX, -cOffY);
+            window.setView(catView);
+
             switch (mode) {
             case 1:
                 osu::draw();
@@ -295,6 +326,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             case 5:
                 custom::draw();
             }
+            
+            window.setView(sf::View(sf::FloatRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)));
         }
 
         if (is_show_input_debug) {

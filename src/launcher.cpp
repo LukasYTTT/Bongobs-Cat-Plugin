@@ -245,19 +245,25 @@ void draw() {
 
         // Dragging Logic
         static bool is_dragging_bg = false;
+        static bool is_dragging_cat = false;
         static sf::Vector2i last_drag_pos;
 
         sf::FloatRect previewBounds(220, 90, 306, 177);
         bool in_preview = previewBounds.contains(mouse_pos.x, mouse_pos.y);
 
         if (current_mouse && !last_mouse && in_preview && data::has_custom_bg) {
-            is_dragging_bg = true;
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) {
+                is_dragging_cat = true;
+            } else {
+                is_dragging_bg = true;
+            }
             last_drag_pos = mouse_pos;
         }
 
-        if (!current_mouse && is_dragging_bg) {
+        if (!current_mouse) {
+            if (is_dragging_bg || is_dragging_cat) data::save_config(); // Save offset
             is_dragging_bg = false;
-            data::save_config(); // Save offset
+            is_dragging_cat = false;
         }
 
         if (is_dragging_bg && current_mouse) {
@@ -271,13 +277,25 @@ void draw() {
                 last_drag_pos = mouse_pos;
             }
         }
+        if (is_dragging_cat && current_mouse) {
+            int dx = mouse_pos.x - last_drag_pos.x;
+            int dy = mouse_pos.y - last_drag_pos.y;
+            if (dx != 0 || dy != 0) {
+                double cScale = data::cfg["decoration"].isMember("catScale") ? data::cfg["decoration"]["catScale"].asDouble() : 1.0;
+                double cOffX = data::cfg["decoration"].isMember("catOffsetX") ? data::cfg["decoration"]["catOffsetX"].asDouble() : 0.0;
+                double cOffY = data::cfg["decoration"].isMember("catOffsetY") ? data::cfg["decoration"]["catOffsetY"].asDouble() : 0.0;
+                data::cfg["decoration"]["catOffsetX"] = cOffX + (dx * 2) / cScale;
+                data::cfg["decoration"]["catOffsetY"] = cOffY + (dy * 2) / cScale;
+                last_drag_pos = mouse_pos;
+            }
+        }
 
-        // Set viewport for preview
-        sf::View previewView(sf::FloatRect(0, 0, 612, 354));
-        previewView.setViewport(sf::FloatRect(220.0f / 612.0f, 90.0f / 354.0f, 306.0f / 612.0f, 177.0f / 354.0f));
+        // 1. Draw custom background with default preview view
+        sf::View previewViewBG(sf::FloatRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT));
+        previewViewBG.setViewport(sf::FloatRect(220.0f / WINDOW_WIDTH, 90.0f / 420.0f, 306.0f / WINDOW_WIDTH, 177.0f / 420.0f));
 
         sf::View defaultView = window.getView();
-        window.setView(previewView);
+        window.setView(previewViewBG);
 
         if (data::has_custom_bg) {
             sf::Sprite custom_bg_sprite(data::custom_bg_tex);
@@ -288,6 +306,17 @@ void draw() {
             custom_bg_sprite.setScale(sc, sc);
             window.draw(custom_bg_sprite);
         }
+
+        // 2. Draw Cat with transformed preview view
+        sf::View previewViewCat(sf::FloatRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT));
+        double cScale = data::cfg["decoration"].isMember("catScale") ? data::cfg["decoration"]["catScale"].asDouble() : 1.0;
+        double cOffX = data::cfg["decoration"].isMember("catOffsetX") ? data::cfg["decoration"]["catOffsetX"].asDouble() : 0.0;
+        double cOffY = data::cfg["decoration"].isMember("catOffsetY") ? data::cfg["decoration"]["catOffsetY"].asDouble() : 0.0;
+        previewViewCat.zoom(1.0 / cScale);
+        previewViewCat.move(-cOffX, -cOffY);
+        previewViewCat.setViewport(sf::FloatRect(220.0f / WINDOW_WIDTH, 90.0f / 420.0f, 306.0f / WINDOW_WIDTH, 177.0f / 420.0f));
+
+        window.setView(previewViewCat);
 
         // Draw the selected mode natively!
         switch (selected_mode) {
@@ -301,7 +330,8 @@ void draw() {
         window.setView(defaultView);
         
         if (data::has_custom_bg) {
-            draw_text("Tipp: Ziehe das Bild mit der Maus oder skaliere es mit dem Mausrad!", 218, 275, 11, sf::Color(150, 200, 255));
+            draw_text("Tipp: Strg+Maus = Hintergrund bewegen/skalieren", 218, 272, 10, sf::Color(150, 200, 255));
+            draw_text("Tipp: Shift+Maus = Katze bewegen/skalieren", 218, 284, 10, sf::Color(150, 200, 255));
         }
     }
 
@@ -397,13 +427,19 @@ void handle_scroll(float delta) {
     auto mouse_pos = sf::Mouse::getPosition(window);
     sf::FloatRect previewBounds(220, 90, 306, 177);
     if (previewBounds.contains(mouse_pos.x, mouse_pos.y)) {
-        double current_scale = data::cfg["decoration"].isMember("customBackgroundScale") ? data::cfg["decoration"]["customBackgroundScale"].asDouble() : 1.0;
-        
-        current_scale += delta * 0.05; // 5% per scroll tick
-        if (current_scale < 0.1) current_scale = 0.1;
-        if (current_scale > 10.0) current_scale = 10.0;
-        
-        data::cfg["decoration"]["customBackgroundScale"] = current_scale;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) {
+            double cScale = data::cfg["decoration"].isMember("catScale") ? data::cfg["decoration"]["catScale"].asDouble() : 1.0;
+            cScale += delta * 0.05;
+            if (cScale < 0.1) cScale = 0.1;
+            if (cScale > 10.0) cScale = 10.0;
+            data::cfg["decoration"]["catScale"] = cScale;
+        } else {
+            double current_scale = data::cfg["decoration"].isMember("customBackgroundScale") ? data::cfg["decoration"]["customBackgroundScale"].asDouble() : 1.0;
+            current_scale += delta * 0.05; // 5% per scroll tick
+            if (current_scale < 0.1) current_scale = 0.1;
+            if (current_scale > 10.0) current_scale = 10.0;
+            data::cfg["decoration"]["customBackgroundScale"] = current_scale;
+        }
         data::save_config();
     }
 }
