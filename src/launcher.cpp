@@ -35,6 +35,7 @@ namespace launcher {
 sf::Font font;
 int selected_mode = 1;
 bool any_key_enabled = false;
+bool smoke_enabled = false;
 bool is_launcher = true;
 
 bool init() {
@@ -45,6 +46,9 @@ bool init() {
     selected_mode = data::cfg["mode"].asInt();
     if (data::cfg["osu"].isMember("anyKey")) {
         any_key_enabled = data::cfg["osu"]["anyKey"].asBool();
+    }
+    if (data::cfg["osu"].isMember("toggleSmoke")) {
+        smoke_enabled = data::cfg["osu"]["toggleSmoke"].asBool();
     }
     return true;
 }
@@ -223,6 +227,32 @@ void draw() {
 
         window.setView(defaultView);
     }
+
+    // Smoke Checkbox
+    sf::RectangleShape smokeBox(sf::Vector2f(20, 20));
+    smokeBox.setPosition(220, 255);
+    smokeBox.setOutlineThickness(1);
+    smokeBox.setOutlineColor(sf::Color(100, 100, 120));
+    
+    sf::FloatRect smokeBounds(220, 255, 250, 20);
+    bool sb_hovered = smokeBounds.contains(mouse_pos.x, mouse_pos.y);
+    if (sb_hovered && clicked) {
+        smoke_enabled = !smoke_enabled;
+        data::cfg["osu"]["toggleSmoke"] = smoke_enabled;
+        data::save_config();
+        
+        switch (selected_mode) {
+            case 1: osu::init(); break;
+            case 2: taiko::init(); break;
+            case 3: ctb::init(); break;
+            case 4: mania::init(); break;
+            case 5: custom::init(); break;
+        }
+    }
+    
+    smokeBox.setFillColor(smoke_enabled ? sf::Color(46, 204, 113) : sf::Color(40, 40, 50));
+    window.draw(smokeBox);
+    draw_text("Smoke Overlay dauerhaft (statt Taste halten)", 250, 257, 12, sf::Color::White);
 
     // Any Key Checkbox
     sf::RectangleShape checkbox(sf::Vector2f(20, 20));

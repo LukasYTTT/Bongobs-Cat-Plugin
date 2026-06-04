@@ -1,8 +1,13 @@
 #include "header.hpp"
 
 namespace taiko {
-Json::Value rim_key_value[2], centre_key_value[2];
-sf::Sprite bg, up[2], rim[2], centre[2];
+Json::Value rim_key_value[2], centre_key_value[2], smoke_key_value;
+sf::Sprite bg, up[2], rim[2], centre[2], smoke;
+
+bool previous_smoke_key_state = false;
+bool current_smoke_key_state = false;
+bool is_toggle_smoke = false;
+bool is_enable_toggle_smoke = false;
 
 int key_state[2] = {0, 0};
 bool rim_key_state[2] = {false, false};
@@ -15,6 +20,9 @@ bool init() {
     bool chk[256];
     std::fill(chk, chk + 256, false);
     Json::Value taiko = data::cfg["taiko"];
+
+    is_enable_toggle_smoke = data::cfg["osu"]["toggleSmoke"].asBool();
+    smoke_key_value = data::cfg["osu"]["smoke"];
 
     rim_key_value[0] = taiko["leftRim"];
     for (Json::Value &v : rim_key_value[0]) {
@@ -49,6 +57,7 @@ bool init() {
     up[1].setTexture(data::load_texture("img/taiko/rightup.png"));
     rim[1].setTexture(data::load_texture("img/taiko/rightrim.png"));
     centre[1].setTexture(data::load_texture("img/taiko/rightcentre.png"));
+    smoke.setTexture(data::load_texture("img/osu/smoke.png"));
 
     return true;
 }
@@ -138,6 +147,28 @@ void draw() {
                 window.draw(up[i]);
             }
         }
+    }
+
+    // draw smoke
+    bool is_smoke_key_pressed = false;
+    for (Json::Value &v : smoke_key_value) {
+        if (input::is_pressed(v.asInt())) {
+            is_smoke_key_pressed = true;
+            break;
+        }
+    }
+    if (is_enable_toggle_smoke) {
+        previous_smoke_key_state = current_smoke_key_state;
+        current_smoke_key_state = is_smoke_key_pressed;
+        bool is_smoke_key_down = current_smoke_key_state && (current_smoke_key_state != previous_smoke_key_state);
+        if (is_smoke_key_down) {
+            is_toggle_smoke = !is_toggle_smoke;
+        }
+    } else {
+        is_toggle_smoke = is_smoke_key_pressed;
+    }
+    if (is_toggle_smoke) {
+        window.draw(smoke);
     }
 }
 }; // namespace taiko

@@ -7,9 +7,19 @@ int left_key_value_4K[2], right_key_value_4K[2];
 int left_key_value_7K[4], right_key_value_7K[4];
 bool is_4K;
 
+Json::Value smoke_key_value;
+sf::Sprite smoke;
+bool previous_smoke_key_state = false;
+bool current_smoke_key_state = false;
+bool is_toggle_smoke = false;
+bool is_enable_toggle_smoke = false;
+
 bool init() {
     // getting configs
     Json::Value mania = data::cfg["mania"];
+
+    is_enable_toggle_smoke = data::cfg["osu"]["toggleSmoke"].asBool();
+    smoke_key_value = data::cfg["osu"]["smoke"];
 
     is_4K = mania["4K"].asBool();
 
@@ -52,6 +62,8 @@ bool init() {
             right_7K[i].setTexture(data::load_texture("img/mania/7K/" + std::to_string(i + 3) + ".png"));
         }
     }
+
+    smoke.setTexture(data::load_texture("img/osu/smoke.png"));
 
     return true;
 }
@@ -157,6 +169,28 @@ void draw() {
         draw_4K();
     } else {
         draw_7K();
+    }
+
+    // draw smoke
+    bool is_smoke_key_pressed = false;
+    for (Json::Value &v : smoke_key_value) {
+        if (input::is_pressed(v.asInt())) {
+            is_smoke_key_pressed = true;
+            break;
+        }
+    }
+    if (is_enable_toggle_smoke) {
+        previous_smoke_key_state = current_smoke_key_state;
+        current_smoke_key_state = is_smoke_key_pressed;
+        bool is_smoke_key_down = current_smoke_key_state && (current_smoke_key_state != previous_smoke_key_state);
+        if (is_smoke_key_down) {
+            is_toggle_smoke = !is_toggle_smoke;
+        }
+    } else {
+        is_toggle_smoke = is_smoke_key_pressed;
+    }
+    if (is_toggle_smoke) {
+        window.draw(smoke);
     }
 }
 }; // namespace mania

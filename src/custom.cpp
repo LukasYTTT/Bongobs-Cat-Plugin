@@ -128,10 +128,21 @@ int offset_x, offset_y, scale;
 int paw_r, paw_g, paw_b, paw_a;
 int paw_edge_r, paw_edge_g, paw_edge_b, paw_edge_a;
 
+Json::Value smoke_key_value;
+sf::Sprite smoke;
+bool previous_smoke_key_state = false;
+bool current_smoke_key_state = false;
+bool is_toggle_smoke = false;
+bool is_enable_toggle_smoke = false;
+
 bool init() {
     // getting configs
     try {
         Json::Value custom = data::cfg["custom"];
+        
+        is_enable_toggle_smoke = data::cfg["osu"]["toggleSmoke"].asBool();
+        smoke_key_value = data::cfg["osu"]["smoke"];
+
         key_containers.clear();
         for (Json::Value& current_key_container : custom["keyContainers"]) {
             key_containers.push_back(key_container(current_key_container));
@@ -166,6 +177,8 @@ bool init() {
             }
             mouse.setTexture(data::load_texture(custom["mouseImage"].asString()));
         }
+        
+        smoke.setTexture(data::load_texture("img/osu/smoke.png"));
     } catch (...) {
         return false;
     }
@@ -331,6 +344,28 @@ void draw() {
     // drawing mouse at the bottom
     if (is_mouse && !is_mouse_on_top) {
         window.draw(mouse);
+    }
+
+    // draw smoke
+    bool is_smoke_key_pressed = false;
+    for (Json::Value &v : smoke_key_value) {
+        if (input::is_pressed(v.asInt())) {
+            is_smoke_key_pressed = true;
+            break;
+        }
+    }
+    if (is_enable_toggle_smoke) {
+        previous_smoke_key_state = current_smoke_key_state;
+        current_smoke_key_state = is_smoke_key_pressed;
+        bool is_smoke_key_down = current_smoke_key_state && (current_smoke_key_state != previous_smoke_key_state);
+        if (is_smoke_key_down) {
+            is_toggle_smoke = !is_toggle_smoke;
+        }
+    } else {
+        is_toggle_smoke = is_smoke_key_pressed;
+    }
+    if (is_toggle_smoke) {
+        window.draw(smoke);
     }
 }
 }; // namespace custom
