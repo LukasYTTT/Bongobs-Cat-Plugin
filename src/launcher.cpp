@@ -80,12 +80,40 @@ void draw() {
         draw_text(modes[i], 35, 98 + i * 45, 14, sf::Color::White);
     }
 
+    // Green Screen Checkbox
+    sf::RectangleShape gsCheckbox(sf::Vector2f(16, 16));
+    gsCheckbox.setPosition(220, 62);
+    gsCheckbox.setOutlineThickness(1);
+    gsCheckbox.setOutlineColor(sf::Color(100, 100, 120));
+    
+    sf::FloatRect gsCheckBounds(220, 62, 200, 16);
+    bool gs_hovered = gsCheckBounds.contains(mouse_pos.x, mouse_pos.y);
+    if (gs_hovered && clicked) {
+        bool is_green = (data::cfg["decoration"]["rgb"][0].asInt() == 0 && data::cfg["decoration"]["rgb"][1].asInt() == 255);
+        if (is_green) {
+            data::cfg["decoration"]["rgb"][0] = 255;
+            data::cfg["decoration"]["rgb"][1] = 255;
+            data::cfg["decoration"]["rgb"][2] = 255;
+        } else {
+            data::cfg["decoration"]["rgb"][0] = 0;
+            data::cfg["decoration"]["rgb"][1] = 255;
+            data::cfg["decoration"]["rgb"][2] = 0;
+        }
+        data::save_config();
+    }
+    
+    bool is_green_now = (data::cfg["decoration"]["rgb"][0].asInt() == 0 && data::cfg["decoration"]["rgb"][1].asInt() == 255);
+    gsCheckbox.setFillColor(is_green_now ? sf::Color(46, 204, 113) : sf::Color(40, 40, 50));
+    window.draw(gsCheckbox);
+    draw_text("Green Screen Hintergrund", 245, 62, 14, sf::Color::White);
+
     // Draw Preview Image
     if (selected_mode >= 1 && selected_mode <= 5) {
         // Frame around preview
         sf::RectangleShape frame(sf::Vector2f(306, 177));
         frame.setPosition(220, 90);
-        frame.setFillColor(sf::Color::Black);
+        Json::Value rgb = data::cfg["decoration"]["rgb"];
+        frame.setFillColor(sf::Color(rgb[0].asInt(), rgb[1].asInt(), rgb[2].asInt()));
         frame.setOutlineThickness(2);
         frame.setOutlineColor(sf::Color(100, 150, 255, 120));
         window.draw(frame);

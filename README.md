@@ -1,63 +1,52 @@
-# Bongo Cat for Linux - Forked by LukasYT
-An osu! Bongo Cat overlay with smooth paw movement, natively ported to Linux with **Wayland support**, a built-in **GUI Launcher**, and the awesome **Any Key** feature!
+<div align="center">
+  <img src="img/osu/mousebg.png" width="300" alt="Bongo Cat" />
+  <h1>Bongo Cat for Linux - Forked by LukasYT</h1>
+  <p>An osu! Bongo Cat overlay with smooth paw movement, natively ported to Linux with <strong>Wayland support</strong>, a built-in <strong>GUI Launcher</strong>, and the awesome <strong>Any Key</strong> feature!</p>
+</div>
 
-This is a heavily modified fork of the original project by [HamishDuncanson](https://github.com/HamishDuncanson).
-Forked and improved by **LukasYT**.
+---
 
-You can find how to configure the application in our [wiki](https://github.com/kuroni/bongocat-osu/wiki/Settings).
+## ✨ New Features in this Fork
+This is a heavily modified and improved fork by **LukasYT** based on the original project. We have added many Quality of Life features specifically for Linux users:
 
-Download the program [here](https://github.com/kuroni/bongocat-osu/releases).
+- **AppImage Support**: No more compiling! Just download, double click, and run.
+- **GUI Launcher**: An elegant graphical interface to select your game mode, toggle the Any Key feature, and enable Green Screen without touching any configuration files.
+- **Green Screen Mode**: Easily toggle a pure green background (`#00FF00`) directly from the launcher. Perfect for using **Chroma Key in OBS Studio** to stream osu! or other games.
+- **Wayland Native**: Seamlessly tracks your mouse and keyboard across your entire desktop, even under Wayland.
+- **Automatic Privilege Escalation**: If direct input access is missing, Bongo Cat will safely and elegantly prompt for your password via a graphical Polkit interface, or seamlessly fall back to X11 mode (perfect for osu! running under Wine).
 
-Hugs and kisses to [CSaratakij](https://github.com/CSaratakij) for creating the Linux port for this project!
+## 🚀 How to Run
 
-Any suggestion and/or collaboration, especially that relating to sprites, is welcomed! Thank you!
+### 1. The Easy Way (AppImage)
+Simply download the `BongoCat-x86_64.AppImage` from the [Releases](https://github.com/LukasYTTT/Bongobs-Cat-Plugin/releases) page.
+1. Make it executable: `chmod +x BongoCat-x86_64.AppImage`
+2. Double click it (or run `./BongoCat-x86_64.AppImage` in the terminal).
+3. Select your mode in the GUI Launcher and click "Start"!
 
-[Original post](https://www.reddit.com/r/osugame/comments/9hrkte/i_know_bongo_cat_is_getting_old_but_heres_a_nicer/) by [Kuvster](https://github.com/Kuvster).
+### 2. Custom Backgrounds
+Want to put your own background behind the cat? 
+1. Use the **Green Screen** checkbox in the launcher and use a Chroma Key filter in OBS.
+2. OR manually replace the background images! Just go into the `img/` folder (e.g., `img/osu/mousebg.png`) and replace the image with your own custom background.
 
-## Further information
-In order to play with fullscreen on Windows 10, run both osu! and this application in Windows 7 compability mode.
+## ⚙️ Building from Source
+If you want to compile it yourself:
 
-Press Ctrl + R to reload configuration and images (will only reload configurations when the window is focused).
+### Dependencies (Linux)
+You need to have these dependencies installed (check your package manager):
+- `g++`
+- `libxdo-dev` (or `xdotool`)
+- `libsdl2-dev`
+- `libsfml-dev`
+- `libx11-dev`
 
-Supported operating system:
-* Windows
-* Linux (tested with Arch Linux with WINE Staging 5). Note: You **must** use WINE Staging, because for whatever reason on stable WINE bongocat-osu doesn't register keyboard input from other windows.
-
-_Notice_: If you're using WINE on Linux, make sure that osu! and this application run in the same `WINEPREFIX`.
-
-## For developers
-This project uses [SFML](https://www.sfml-dev.org/index.php) and [JsonCpp](https://github.com/open-source-parsers/jsoncpp). JsonCpp libraries are directly included in the source using the provided `amalgamation.py` from the developers.
-
-### Libraries and dependency
-
-#### Windows and MinGW
-To build the source, download the SFML libraries [here](https://www.sfml-dev.org/index.php), copy `Makefile.windows` to `Makefile`, then replace *`<SFML-folder>`* in `Makefile` with the desired folder.
-
-#### Linux
-You need to have these dependencies installed. Check with your package manager for the exact name of these dependencies on your distro:
-- g++
-- libxdo
-- sdl2
-- sfml
-- x11
-- xrandr
-
-Then, copy `Makefile.linux` to `Makefile`.
-
-### Building and testing
-To build, run this command from the base directory:
-
+### Compiling
 ```sh
 make
 ```
-
-To test the program, run this from the base directory:
-
+You can then run the compiled binary:
 ```sh
-make test
+./bin/bongo
 ```
 
-Alternatively, you can copy the newly-compiled `bin/bongo.exe` or `bin/bongo` into the base directory and execute it.
-
-If you have troubles compiling, it can be due to version mismatch between your compiler and SFML. See [#43](https://github.com/kuroni/bongocat-osu/issues/43) for more information.
-
+---
+*Original project by [HamishDuncanson](https://github.com/HamishDuncanson) and Linux port by [CSaratakij](https://github.com/CSaratakij). Forked and maintained by LukasYT.*
