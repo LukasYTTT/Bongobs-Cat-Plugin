@@ -5,7 +5,7 @@ ICODIR := ico
 SRC := $(wildcard $(SRCDIR)/*.cpp)
 OBJ := $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRC))
 CXXFLAGS := -std=c++17 -O2
-LDFLAGS := -L/opt/sfml2/lib -Wl,-rpath=/opt/sfml2/lib -lsfml-graphics -lsfml-window -lsfml-system -lSDL2 -lX11 -lpthread
+LDFLAGS := -L/opt/sfml2/lib -Wl,-rpath=/opt/sfml2/lib -lsfml-graphics -lsfml-window -lsfml-audio -lsfml-system -lSDL2 -lX11 -lpthread
 INCFLAGS := -Iinclude -I/opt/sfml2/include
 
 .PHONY: test create clean
@@ -26,5 +26,5 @@ test:
 	bin/bongo
 
 clean:
-	rm $(OBJ) || true
+	rm $(OBJ) obj/face.o || true
 

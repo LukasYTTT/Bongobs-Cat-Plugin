@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include "json/json.h"
 
 extern sf::RenderWindow window;
@@ -90,8 +91,20 @@ void draw();
 }; // namespace custom
 
 namespace launcher {
-extern bool is_launcher;
-bool init();
-void draw();
-void handle_scroll(float delta);
+    extern bool is_launcher;
+    bool init();
+    void draw();
+    void handle_scroll(float delta);
 }; // namespace launcher
+
+namespace mic {
+    bool init();
+    void clean();
+    bool is_talking();
+}; // namespace mic
+
+namespace face {
+    void init();
+    void handle_key(sf::Keyboard::Key key);
+    void draw(sf::RenderWindow &window);
+}; // namespace face

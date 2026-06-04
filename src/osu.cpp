@@ -361,6 +361,8 @@ void draw() {
         mouth.setPosition(mx, my);
         window.draw(mouth);
     }
+    
+    face::draw(window);
 
     // drawing tablet
     if (!is_mouse) {

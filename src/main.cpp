@@ -102,6 +102,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         continue;
     }
     mic::init();
+    face::init();
 
     // initialize input
     if (!input::init()) {
@@ -154,7 +155,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                     last_mtime = st.st_mtime;
                     while (!data::init()) { continue; }
                     mic::init();
-
+                    face::init();
                     bool is_green = (data::cfg["decoration"]["rgb"][0].asInt() == 0 && data::cfg["decoration"]["rgb"][1].asInt() == 255);
                     if (is_green != last_is_green) {
                         last_is_green = is_green;
@@ -276,9 +277,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                 // press ESC to close (important for borderless mode)
                 if (event.key.code == sf::Keyboard::Escape) {
                     window.close();
-                    break;
                 }
-
+                face::handle_key(event.key.code);
+                
                 // get reload config prompt
                 if (event.key.code == sf::Keyboard::R && event.key.control) {
                     if (!is_reload) {
