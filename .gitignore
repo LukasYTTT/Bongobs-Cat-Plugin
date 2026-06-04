@@ -1,0 +1,9 @@
+obj/
+bin/
+*.o
+*.out
+.vscode/
+build_deb/
+build_appimage/
+*.deb
+*.AppImage

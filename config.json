@@ -1,0 +1,170 @@
+{
+    "catch" : 
+    {
+        "dash" : 
+        [
+            16,
+            32
+        ],
+        "left" : 
+        [
+            37,
+            65
+        ],
+        "right" : 
+        [
+            39,
+            68
+        ]
+    },
+    "custom" : 
+    {
+        "background" : "img/osu/mousebg.png",
+        "keyContainers" : [],
+        "mouse" : false,
+        "mouseImage" : "img/osu/mouse.png",
+        "mouseOnTop" : true,
+        "offsetX" : 0,
+        "offsetY" : 0,
+        "paw" : 
+        [
+            255,
+            255,
+            255
+        ],
+        "pawEdge" : 
+        [
+            0,
+            0,
+            0
+        ],
+        "scalar" : 1.0
+    },
+    "decoration" : 
+    {
+        "leftHanded" : false,
+        "offsetX" : 
+        [
+            0,
+            11
+        ],
+        "offsetY" : 
+        [
+            0,
+            -65
+        ],
+        "rgb" : 
+        [
+            255,
+            255,
+            255
+        ],
+        "scalar" : 
+        [
+            1.0,
+            1.0
+        ]
+    },
+    "mania" : 
+    {
+        "4K" : true,
+        "key4K" : 
+        [
+            68,
+            70,
+            74,
+            75
+        ],
+        "key7K" : 
+        [
+            83,
+            68,
+            70,
+            32,
+            74,
+            75,
+            76
+        ]
+    },
+    "mode" : 2,
+    "mousePaw" : 
+    {
+        "mousePawComment" : "coordinates start in the top left of the window",
+        "pawEndingPoint" : 
+        [
+            258,
+            228
+        ],
+        "pawStartingPoint" : 
+        [
+            211,
+            159
+        ]
+    },
+    "osu" : 
+    {
+        "anyKey" : true,
+        "key1" : 
+        [
+            1,
+            65,
+            87,
+            49,
+            90
+        ],
+        "key2" : 
+        [
+            2,
+            68,
+            83,
+            50,
+            88
+        ],
+        "mouse" : true,
+        "paw" : 
+        [
+            255,
+            255,
+            255
+        ],
+        "pawEdge" : 
+        [
+            0,
+            0,
+            0
+        ],
+        "smoke" : 
+        [
+            67
+        ],
+        "toggleSmoke" : false,
+        "wave" : []
+    },
+    "resolution" : 
+    {
+        "height" : 1080,
+        "horizontalPosition" : 0,
+        "letterboxing" : false,
+        "verticalPosition" : 0,
+        "width" : 1920
+    },
+    "taiko" : 
+    {
+        "leftCentre" : 
+        [
+            88
+        ],
+        "leftRim" : 
+        [
+            90
+        ],
+        "rightCentre" : 
+        [
+            67
+        ],
+        "rightRim" : 
+        [
+            86
+        ]
+    }
+}
