@@ -82,13 +82,16 @@ int main(int argc, char ** argv) {
             }
         }
     }
-
 #else
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     bool skip_launcher = false;
 #endif
 
-    window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::Titlebar | sf::Style::Close);
+    if (skip_launcher) {
+        window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::Titlebar | sf::Style::Close);
+    } else {
+        window.create(sf::VideoMode(WINDOW_WIDTH, 420), "Bongo Cat for osu! (Launcher)", sf::Style::Titlebar | sf::Style::Close);
+    }
     window.setFramerateLimit(MAX_FRAMERATE);
 
     // loading configs
@@ -115,7 +118,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     bool last_is_green = false;
 
     bool is_dragging = false;
+    bool is_dragging_bg = false;
     sf::Vector2i drag_offset;
+    sf::Vector2i bg_drag_last_pos;
 
     while (window.isOpen()) {
         if (was_launcher && !launcher::is_launcher) {
@@ -124,8 +129,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             last_is_green = (data::cfg["decoration"]["rgb"][0].asInt() == 0 && data::cfg["decoration"]["rgb"][1].asInt() == 255);
             if (last_is_green) {
                 window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::None);
-                window.setFramerateLimit(MAX_FRAMERATE);
+            } else {
+                window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::Titlebar | sf::Style::Close);
             }
+            window.setFramerateLimit(MAX_FRAMERATE);
+            window.setView(sf::View(sf::FloatRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)));
         }
 
         if (!launcher::is_launcher) {
@@ -147,6 +155,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                             window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::Titlebar | sf::Style::Close);
                         }
                         window.setFramerateLimit(MAX_FRAMERATE);
+                        window.setView(sf::View(sf::FloatRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)));
                     }
                 }
             }
@@ -163,23 +172,49 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             case sf::Event::MouseWheelScrolled:
                 if (launcher::is_launcher) {
                     launcher::handle_scroll(event.mouseWheelScroll.delta);
+                } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) {
+                    if (data::has_custom_bg) {
+                        double current_scale = data::cfg["decoration"].isMember("customBackgroundScale") ? data::cfg["decoration"]["customBackgroundScale"].asDouble() : 1.0;
+                        current_scale += event.mouseWheelScroll.delta * 0.05;
+                        if (current_scale < 0.1) current_scale = 0.1;
+                        if (current_scale > 10.0) current_scale = 10.0;
+                        data::cfg["decoration"]["customBackgroundScale"] = current_scale;
+                        data::save_config();
+                    }
                 }
                 break;
 
             case sf::Event::MouseButtonPressed:
                 if (event.mouseButton.button == sf::Mouse::Left && !launcher::is_launcher) {
-                    is_dragging = true;
-                    drag_offset = window.getPosition() - sf::Mouse::getPosition();
+                    if ((sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) && data::has_custom_bg) {
+                        is_dragging_bg = true;
+                        bg_drag_last_pos = sf::Mouse::getPosition(window);
+                    } else {
+                        is_dragging = true;
+                        drag_offset = window.getPosition() - sf::Mouse::getPosition();
+                    }
                 }
                 break;
             case sf::Event::MouseButtonReleased:
                 if (event.mouseButton.button == sf::Mouse::Left) {
                     is_dragging = false;
+                    is_dragging_bg = false;
                 }
                 break;
             case sf::Event::MouseMoved:
-                if (is_dragging && !launcher::is_launcher) {
-                    window.setPosition(sf::Mouse::getPosition() + drag_offset);
+                if (!launcher::is_launcher) {
+                    if (is_dragging) {
+                        window.setPosition(sf::Mouse::getPosition() + drag_offset);
+                    } else if (is_dragging_bg) {
+                        int dx = sf::Mouse::getPosition(window).x - bg_drag_last_pos.x;
+                        int dy = sf::Mouse::getPosition(window).y - bg_drag_last_pos.y;
+                        int ox = data::cfg["decoration"]["customBackgroundOffsetX"].asInt();
+                        int oy = data::cfg["decoration"]["customBackgroundOffsetY"].asInt();
+                        data::cfg["decoration"]["customBackgroundOffsetX"] = ox + dx;
+                        data::cfg["decoration"]["customBackgroundOffsetY"] = oy + dy;
+                        data::save_config();
+                        bg_drag_last_pos = sf::Mouse::getPosition(window);
+                    }
                 }
                 break;
 
