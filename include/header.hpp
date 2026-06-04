@@ -24,6 +24,7 @@ extern sf::RenderWindow window;
 
 namespace data {
 extern Json::Value cfg;
+extern std::map<std::string, sf::Texture> img_holder;
 
 void error_msg(std::string error, std::string title);
 

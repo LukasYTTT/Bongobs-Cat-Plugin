@@ -53,8 +53,15 @@ void draw() {
             if (selected_mode != i + 1) {
                 selected_mode = i + 1;
                 data::cfg["mode"] = selected_mode;
-                data::save_config();
-                while (!data::init()) { continue; } // Re-initialize the newly selected mode!
+                data::save_config(); // Fails gracefully in AppImage
+                data::img_holder.clear();
+                switch (selected_mode) {
+                    case 1: osu::init(); break;
+                    case 2: taiko::init(); break;
+                    case 3: ctb::init(); break;
+                    case 4: mania::init(); break;
+                    case 5: custom::init(); break;
+                }
             }
         }
 
@@ -132,10 +139,9 @@ void draw() {
         data::cfg["mode"] = selected_mode;
         data::cfg["osu"]["anyKey"] = any_key_enabled;
         data::cfg["taiko"]["anyKey"] = any_key_enabled;
-        data::save_config();
+        data::save_config(); // Fails gracefully in AppImage
         
         is_launcher = false; // Exit launcher
-        while (!data::init()) { continue; } // Load assets for the new mode
     }
     
     window.draw(startBtn);
