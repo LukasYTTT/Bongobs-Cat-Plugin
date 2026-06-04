@@ -142,6 +142,7 @@ bool init() {
         
         is_enable_toggle_smoke = data::cfg["osu"]["toggleSmoke"].asBool();
         smoke_key_value = data::cfg["osu"]["smoke"];
+        is_toggle_smoke = is_enable_toggle_smoke;
 
         key_containers.clear();
         for (Json::Value& current_key_container : custom["keyContainers"]) {
@@ -151,7 +152,9 @@ bool init() {
             data::error_msg("Custom background not found", "Error reading config");
             return false;
         }
-        bg.setTexture(data::load_background(custom["background"].asString()));
+        if (custom["background"].asString() != "") {
+            bg.setTexture(data::load_texture(custom["background"].asString()));
+        }
 
         is_mouse = custom["mouse"].asBool();
         if (is_mouse) {

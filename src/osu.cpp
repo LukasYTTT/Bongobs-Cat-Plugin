@@ -27,6 +27,8 @@ bool init() {
 
     is_mouse = osu["mouse"].asBool();
     is_enable_toggle_smoke = osu["toggleSmoke"].asBool();
+    smoke_key_value = osu["smoke"];
+    is_toggle_smoke = is_enable_toggle_smoke;
 
     paw_r = osu["paw"][0].asInt();
     paw_g = osu["paw"][1].asInt();
@@ -78,10 +80,10 @@ bool init() {
     right.setTexture(data::load_texture("img/osu/right.png"));
     wave.setTexture(data::load_texture("img/osu/wave.png"));
     if (is_mouse) {
-        bg.setTexture(data::load_background("img/osu/mousebg.png"));
+        bg.setTexture(data::load_texture("img/osu/mousebg.png"));
         device.setTexture(data::load_texture("img/osu/mouse.png"), true);
     } else {
-        bg.setTexture(data::load_background("img/osu/tabletbg.png"));
+        bg.setTexture(data::load_texture("img/osu/tabletbg.png"));
         device.setTexture(data::load_texture("img/osu/tablet.png"), true);
     }
     smoke.setTexture(data::load_texture("img/osu/smoke.png"));

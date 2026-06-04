@@ -21,6 +21,7 @@ bool init() {
 
     is_enable_toggle_smoke = data::cfg["osu"]["toggleSmoke"].asBool();
     smoke_key_value = data::cfg["osu"]["smoke"];
+    is_toggle_smoke = is_enable_toggle_smoke;
 
     bool chk[256];
     std::fill(chk, chk + 256, false);
@@ -38,7 +39,7 @@ bool init() {
     dash_key_value = ctb["dash"];
 
     // importing sprites
-    bg.setTexture(data::load_background("img/catch/bg.png"));
+    bg.setTexture(data::load_texture("img/catch/bg.png"));
     mid.setTexture(data::load_texture("img/catch/mid.png"));
     left.setTexture(data::load_texture("img/catch/left.png"));
     right.setTexture(data::load_texture("img/catch/right.png"));

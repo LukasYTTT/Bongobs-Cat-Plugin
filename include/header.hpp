@@ -25,6 +25,8 @@ extern sf::RenderWindow window;
 namespace data {
 extern Json::Value cfg;
 extern std::map<std::string, sf::Texture> img_holder;
+extern sf::Texture custom_bg_tex;
+extern bool has_custom_bg;
 
 std::string get_config_path();
 

@@ -272,6 +272,11 @@ void draw() {
         sf::View defaultView = window.getView();
         window.setView(previewView);
 
+        if (data::has_custom_bg) {
+            sf::Sprite custom_bg_sprite(data::custom_bg_tex);
+            window.draw(custom_bg_sprite);
+        }
+
         // Draw the selected mode natively!
         switch (selected_mode) {
             case 1: osu::draw(); break;

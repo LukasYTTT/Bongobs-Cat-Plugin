@@ -183,6 +183,9 @@ void save_config() {
     writer->write(cfg, &cfg_file);
 }
 
+sf::Texture custom_bg_tex;
+bool has_custom_bg = false;
+
 bool init() {
     while (true) {
         create_config();
@@ -204,6 +207,17 @@ bool init() {
     }
 
     img_holder.clear();
+
+    if (cfg["decoration"].isMember("customBackground") && cfg["decoration"]["customBackground"].isString() && cfg["decoration"]["customBackground"].asString() != "") {
+        std::string customPath = cfg["decoration"]["customBackground"].asString();
+        if (custom_bg_tex.loadFromFile(customPath)) {
+            has_custom_bg = true;
+        } else {
+            has_custom_bg = false;
+        }
+    } else {
+        has_custom_bg = false;
+    }
 
     int mode = data::cfg["mode"].asInt();
 
@@ -232,22 +246,5 @@ sf::Texture &load_texture(std::string path) {
     }
     return img_holder[path];
 }
-
-sf::Texture &load_background(std::string default_path) {
-    if (cfg["decoration"].isMember("customBackground") && cfg["decoration"]["customBackground"].isString()) {
-        std::string customPath = cfg["decoration"]["customBackground"].asString();
-        if (customPath != "") {
-            if (img_holder.find(customPath) == img_holder.end()) {
-                if (img_holder[customPath].loadFromFile(customPath)) {
-                    return img_holder[customPath];
-                } else {
-                    // Fallback to default if custom fails to load
-                    return load_texture(default_path);
-                }
-            }
-            return img_holder[customPath];
-        }
-    }
-    return load_texture(default_path);
-}
+}; // namespace data
 }; // namespace data

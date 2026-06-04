@@ -23,6 +23,7 @@ bool init() {
 
     is_enable_toggle_smoke = data::cfg["osu"]["toggleSmoke"].asBool();
     smoke_key_value = data::cfg["osu"]["smoke"];
+    is_toggle_smoke = is_enable_toggle_smoke;
 
     rim_key_value[0] = taiko["leftRim"];
     for (Json::Value &v : rim_key_value[0]) {
@@ -50,7 +51,7 @@ bool init() {
     }
 
     // importing sprites
-    bg.setTexture(data::load_background("img/taiko/bg.png"));
+    bg.setTexture(data::load_texture("img/taiko/bg.png"));
     up[0].setTexture(data::load_texture("img/taiko/leftup.png"));
     rim[0].setTexture(data::load_texture("img/taiko/leftrim.png"));
     centre[0].setTexture(data::load_texture("img/taiko/leftcentre.png"));

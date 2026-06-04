@@ -20,6 +20,7 @@ bool init() {
 
     is_enable_toggle_smoke = data::cfg["osu"]["toggleSmoke"].asBool();
     smoke_key_value = data::cfg["osu"]["smoke"];
+    is_toggle_smoke = is_enable_toggle_smoke;
 
     is_4K = mania["4K"].asBool();
 
@@ -46,7 +47,7 @@ bool init() {
     }
 
     if (is_4K) {
-        bg.setTexture(data::load_background("img/mania/4K/bg.png"));
+        bg.setTexture(data::load_texture("img/mania/4K/bg.png"));
         for (int i = 0; i < 2; i++) {
             left_4K[i].setTexture(data::load_texture("img/mania/4K/" + std::to_string(i) + ".png"));
         }
@@ -54,7 +55,7 @@ bool init() {
             right_4K[i].setTexture(data::load_texture("img/mania/4K/" + std::to_string(i + 2) + ".png"));
         }
     } else {
-        bg.setTexture(data::load_background("img/mania/7K/bg.png"));
+        bg.setTexture(data::load_texture("img/mania/7K/bg.png"));
         for (int i = 0; i < 4; i++) {
             left_7K[i].setTexture(data::load_texture("img/mania/7K/" + std::to_string(i) + ".png"));
         }

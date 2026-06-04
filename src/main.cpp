@@ -225,6 +225,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
         window.clear(sf::Color(red_value, green_value, blue_value, alpha_value));
         
+        if (data::has_custom_bg && !launcher::is_launcher) {
+            sf::Sprite custom_bg_sprite(data::custom_bg_tex);
+            window.draw(custom_bg_sprite);
+        }
+        
         if (launcher::is_launcher) {
             launcher::draw();
         } else {
